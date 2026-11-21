@@ -5,7 +5,9 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
 
-const DB_DIR = path.join(process.cwd(), '.data');
+const DB_DIR = process.env.VERCEL
+  ? path.join('/tmp', '.data')
+  : path.join(process.cwd(), '.data');
 const LOCAL_DB_FILE = path.join(DB_DIR, 'nexora_db.json');
 
 // Ensure local storage directory exists
@@ -260,6 +262,9 @@ class LocalDbRepository {
 
   private persist() {
     try {
+      if (!fs.existsSync(DB_DIR)) {
+        fs.mkdirSync(DB_DIR, { recursive: true });
+      }
       fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(this.data, null, 2), 'utf8');
     } catch (e) {
       console.error('Failed to write local db', e);
