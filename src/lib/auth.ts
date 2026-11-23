@@ -3,14 +3,14 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { localDb } from '@/db';
 
-export const SESSION_COOKIE_NAME = 'nexora_session';
+export const SESSION_COOKIE_NAME = 'aetherx_session';
 export const SESSION_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
 
 // Secure HMAC Secret for stateless serverless sessions
 const SESSION_SECRET =
   process.env.SESSION_SECRET ||
   process.env.NEXTAUTH_SECRET ||
-  'nexora_enterprise_crm_session_hmac_secret_key_production_2026';
+  'aetherx_enterprise_crm_session_hmac_secret_key_production_2026';
 
 function signSessionToken(payload: any): string {
   const jsonStr = JSON.stringify(payload);
@@ -152,7 +152,7 @@ export async function loginUser(email: string, passwordPlain: string) {
   localDb.insert('activityLogs', {
     who: user.name,
     what: 'signed in to workspace',
-    target: 'NEXORA CRM',
+    target: 'AetherX',
     type: 'auth',
     time: new Date().toISOString(),
   });
@@ -193,8 +193,8 @@ export async function registerUser(
   // Create clean new organization
   const org = localDb.insert('organisations', {
     name: companyName.trim() || 'My Company',
-    domain: cleanEmail.split('@')[1] || 'nexora.app',
-    plan: 'Pro',
+    domain: cleanEmail.split('@')[1] || 'aetherx.app',
+    plan: 'Growth',
     users: 1,
     status: 'Active',
     primaryColor: '#6366F1',

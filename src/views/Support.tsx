@@ -33,7 +33,7 @@ import {
 const DEFAULT_KB = [
   {
     id: 'kb-1',
-    title: 'Connecting Meta Lead Ads to Nexora CRM',
+    title: 'Connecting Meta Lead Ads to AetherX',
     category: 'Integrations',
     views: 1420,
     updated: new Date(Date.now() - 864e5 * 3).toISOString().slice(0, 10),

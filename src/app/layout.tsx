@@ -4,7 +4,7 @@ import { StoreProvider } from '@/lib/store';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
-  title: 'NEXORA CRM · Business Platform',
+  title: 'AetherX · Business Platform',
   description: 'Complete responsive business management platform with leads, customers, tasks, telecalling, GST invoicing and AI.',
 };
 

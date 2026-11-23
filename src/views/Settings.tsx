@@ -56,18 +56,18 @@ function readFile(e: React.ChangeEvent<HTMLInputElement>, cb: (data: string) => 
 export function WhiteLabelView() {
   const store = useStore();
   const b = store.state.brand || {
-    name: 'NEXORA CRM',
-    short: 'Nexora',
+    name: 'AetherX',
+    short: 'AetherX',
     primary: '#6366F1',
     secondary: '#8B5CF6',
     loginHeadline: 'The Intelligent Business Management Platform',
     loginSub: 'Manage leads, customers, telecalling, billing and AI workflows in one integrated workspace.',
     company: {
-      legal: 'Nexora Technologies Pvt Ltd',
+      legal: 'AetherX Technologies Pvt. Ltd.',
       gst: '27AABCN1234F1Z8',
-      email: 'billing@nexora.app',
+      email: 'hello@aetherx.app',
       phone: '+91 22 4988 7700',
-      website: 'https://nexora.app',
+      website: 'https://aetherx.app',
       address: 'Level 14, Tower B, Peninsula Business Park, Lower Parel, Mumbai 400013',
     },
   };
@@ -97,19 +97,19 @@ export function WhiteLabelView() {
             data-testid="brand-reset-btn"
             onClick={() => {
               store.set('brand', {
-                name: 'NEXORA CRM',
-                short: 'Nexora',
+                name: 'AetherX',
+                short: 'AetherX',
                 primary: '#6366F1',
                 secondary: '#8B5CF6',
                 loginHeadline: 'The Intelligent Business Management Platform',
                 loginSub:
                   'Manage leads, customers, telecalling, billing and AI workflows in one integrated workspace.',
                 company: {
-                  legal: 'Nexora Technologies Pvt Ltd',
+                  legal: 'AetherX Technologies Pvt. Ltd.',
                   gst: '27AABCN1234F1Z8',
-                  email: 'billing@nexora.app',
+                  email: 'hello@aetherx.app',
                   phone: '+91 22 4988 7700',
-                  website: 'https://nexora.app',
+                  website: 'https://aetherx.app',
                   address:
                     'Level 14, Tower B, Peninsula Business Park, Lower Parel, Mumbai 400013',
                 },
@@ -367,7 +367,7 @@ export function WhiteLabelView() {
                       {b.loginSub}
                     </p>
                   </div>
-                  <p className="text-slate-500 text-[10px]">© {b.company?.legal || 'Nexora'}</p>
+                  <p className="text-slate-500 text-[10px]">© {b.company?.legal || 'AetherX'}</p>
                 </div>
                 <div className="bg-white p-5 flex flex-col justify-center gap-2 border-l border-[#E5E7EB]">
                   <p className="font-semibold text-xs text-[#111827]">Sign in to your account</p>
@@ -716,11 +716,11 @@ export default function SettingsView() {
   const store = useStore();
   const { state } = store;
   const [tab, setTab] = useState('Profile');
-  const me = state.session || { name: 'Aisha Khan', email: 'admin@nexora.app', role: 'Admin' };
+  const me = state.session || { name: 'Admin', email: 'admin@aetherx.app', role: 'Admin' };
 
   const [prof, setProf] = useState({
-    name: me.name || 'Aisha Khan',
-    email: me.email || 'admin@nexora.app',
+    name: me.name || 'Admin',
+    email: me.email || 'admin@aetherx.app',
     phone: '+91 98765 43210',
     title: 'Head of Operations',
   });
@@ -793,7 +793,7 @@ export default function SettingsView() {
           <div className="space-y-4">
             <Field
               f={{ key: 'org-name', label: 'Organisation name' }}
-              value={state.brand?.name || 'NEXORA CRM'}
+              value={state.brand?.name || 'AetherX'}
               onChange={(v: string) =>
                 store.set('brand', { ...(state.brand || {}), name: v })
               }
@@ -874,7 +874,7 @@ export default function SettingsView() {
             <div className="pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1">
               <p className="font-semibold text-[#111827]">Active Login Sessions:</p>
               <p>• Chrome on Windows (Current session) — IP 122.161.42.18</p>
-              <p>• Nexora Mobile App (iPhone 15) — Active 14 mins ago</p>
+              <p>• AetherX Mobile App (iPhone 15) — Active 14 mins ago</p>
             </div>
           </div>
         )}

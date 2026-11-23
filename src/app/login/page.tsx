@@ -104,7 +104,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        <p className="text-slate-500 text-xs">© 2026 {b?.company?.legal || 'NEXORA CRM'}</p>
+        <p className="text-slate-500 text-xs">© 2026 {b?.company?.legal || 'AetherX'}</p>
       </div>
 
       {/* Right form pane */}
@@ -145,7 +145,7 @@ export default function LoginPage() {
           </div>
 
           <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
-            {mode === 'signin' ? 'Welcome to NEXORA' : 'Create pure workspace'}
+            {mode === 'signin' ? 'Welcome to AetherX' : 'Create your workspace'}
           </h2>
           <p className="text-sm text-slate-500 mt-1">
             {mode === 'signin'
@@ -237,7 +237,7 @@ export default function LoginPage() {
               onClick={() => submit(undefined, 'admin@nexora.app', 'demo1234', '/app/overview')}
               className="text-xs text-slate-500 hover:text-brand font-medium transition-colors"
             >
-              Or enter clean workspace with default admin credentials →
+              Or sign in with demo admin credentials →
             </button>
           </div>
         </div>

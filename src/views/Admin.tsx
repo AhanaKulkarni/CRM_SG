@@ -63,8 +63,8 @@ export default function AdminView() {
   const orgs = state.orgs || [
     {
       id: 'org-1',
-      name: 'Nexora Technologies',
-      domain: 'nexora.app',
+      name: 'AetherX Technologies',
+      domain: 'aetherx.app',
       plan: 'Pro',
       users: 42,
       status: 'Active',
@@ -192,7 +192,7 @@ export default function AdminView() {
             <ShieldCheck className="w-4 h-4" />
           </span>
           <div className="min-w-0">
-            <p className="font-semibold text-sm truncate">Nexora Platform · Super Admin</p>
+            <p className="font-semibold text-sm truncate">AetherX Platform · Super Admin</p>
             <p className="text-[11px] text-slate-400">Multi-tenant control centre</p>
           </div>
           <div className="ml-auto flex items-center gap-2">

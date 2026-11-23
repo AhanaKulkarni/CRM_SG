@@ -123,8 +123,8 @@ function MetaTab() {
       <DemoBanner />
       <div className="grid md:grid-cols-2 gap-4">
         {[
-          ['Facebook Page', 'Nexora Business · 12.4k followers', Facebook, '#1877F2'],
-          ['Instagram Business', '@nexora.crm · 8.9k followers', Instagram, '#E1306C'],
+          ['Facebook Page', 'AetherX Business · 12.4k followers', Facebook, '#1877F2'],
+          ['Instagram Business', '@aetherx.crm · 8.9k followers', Instagram, '#E1306C'],
         ].map(([t, s, IconComponent, c]: any) => (
           <Card key={t} className="p-5 flex items-center gap-4">
             <span

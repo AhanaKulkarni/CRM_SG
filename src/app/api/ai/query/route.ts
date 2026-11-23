@@ -180,7 +180,7 @@ export async function POST(request: Request) {
   // Integrations query
   if (/whatsapp|integrat|facebook|instagram|meta|website/.test(t)) {
     return NextResponse.json({
-      reply: `NEXORA CRM connects with Facebook & Instagram lead ads, website forms via secure webhooks, WhatsApp Cloud API, Gmail and Google Calendar. Incoming enquiries flow directly into your pipeline with zero manual entry.`,
+      reply: `AetherX connects with Facebook & Instagram lead ads, website forms via secure webhooks, WhatsApp Cloud API, Gmail and Google Calendar. Incoming enquiries flow directly into your pipeline with zero manual entry.`,
     });
   }
 

@@ -8,21 +8,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<any>({
     session: null,
     brand: {
-      name: 'NEXORA CRM',
-      short: 'Nexora',
+      name: 'AetherX',
+      short: 'AetherX',
       logo: '',
       favicon: '',
       primary: '#6366F1',
       secondary: '#8B5CF6',
       loginHeadline: 'Accelerate your entire revenue engine',
-      loginSub: 'Manage leads, automate customer journeys, issue GST invoices and run AI-assisted telecalling in one command center.',
+      loginSub: 'Manage leads, run telecalling campaigns, track customers and grow your business — all in one platform.',
       company: {
-        legal: 'Nexora Technologies Pvt. Ltd.',
-        gst: '27AADCN1234F1Z8',
-        email: 'finance@nexora.app',
-        phone: '+91 22 4912 8800',
-        website: 'https://nexora.app',
-        address: 'BKC, Bandra East, Mumbai, Maharashtra 400051',
+        legal: 'AetherX Technologies Pvt. Ltd.',
+        gst: '',
+        email: 'hello@aetherx.app',
+        phone: '',
+        website: 'https://aetherx.app',
+        address: '',
       },
     },
     bot: {
@@ -92,7 +92,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const root = document.documentElement;
       root.style.setProperty('--brand', b.primary || '#6366F1');
       root.style.setProperty('--brand2', b.secondary || '#8B5CF6');
-      document.title = `${b.name || 'NEXORA CRM'} · Business Platform`;
+      document.title = `${b.name || 'AetherX'} · Business Platform`;
     }
   }, [state.brand]);
 

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
@@ -7,7 +8,7 @@ import * as schema from './schema';
 const DB_DIR = process.env.VERCEL
   ? path.join('/tmp', '.data')
   : path.join(process.cwd(), '.data');
-const LOCAL_DB_FILE = path.join(DB_DIR, 'nexora_db.json');
+const LOCAL_DB_FILE = path.join(DB_DIR, 'aetherx_db.json');
 
 // Ensure local storage directory exists
 if (!fs.existsSync(DB_DIR)) {
@@ -31,19 +32,21 @@ if (databaseUrl) {
   }
 }
 
-// Initial seed data for essential setup (Zero demo records for business data)
+// Initial seed data — includes demo accounts for AetherX
 function getInitialDbState() {
   const now = new Date().toISOString();
   const defaultOrgId = '00000000-0000-0000-0000-000000000001';
+  // Pre-hash demo1234
+  const demoHash = bcrypt.hashSync('demo1234', 10);
 
   return {
     organisations: [
       {
         id: defaultOrgId,
-        name: 'My Workspace',
-        domain: 'crm.local',
+        name: 'AetherX',
+        domain: 'aetherx.app',
         plan: 'Growth',
-        users: 1,
+        users: 2,
         status: 'Active',
         primaryColor: '#6366F1',
         secondaryColor: '#8B5CF6',
@@ -52,8 +55,37 @@ function getInitialDbState() {
         updatedAt: now,
       },
     ],
-    // No pre-seeded user accounts — users register via /login (Register tab)
-    authorisedUsers: [],
+    // Demo accounts — seeded on fresh install
+    authorisedUsers: [
+      {
+        id: '10000000-0000-0000-0000-000000000001',
+        orgId: defaultOrgId,
+        name: 'Workspace Admin',
+        email: 'admin@nexora.app',
+        passwordHash: demoHash,
+        role: 'Admin',
+        designation: 'Head of Sales',
+        phone: '',
+        avatar: '',
+        status: 'Active',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: '10000000-0000-0000-0000-000000000002',
+        orgId: defaultOrgId,
+        name: 'Platform Owner',
+        email: 'superadmin@nexora.app',
+        passwordHash: demoHash,
+        role: 'Super Admin',
+        designation: 'Platform Administrator',
+        phone: '',
+        avatar: '',
+        status: 'Active',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
     sessions: [],
     organisationSettings: [],
     // Organisation settings added when first admin registers
@@ -97,7 +129,7 @@ function getInitialDbState() {
         orgId: defaultOrgId,
         who: 'System',
         what: 'initialised workspace',
-        target: 'NEXORA CRM',
+        target: 'AetherX',
         type: 'system',
         time: now,
         createdAt: now,

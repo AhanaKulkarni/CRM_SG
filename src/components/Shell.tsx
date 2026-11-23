@@ -104,7 +104,7 @@ export const NAV_CALLER = [
 export const NAV = NAV_ADMIN;
 
 export function BrandMark({ brand, size = 32, light }: any) {
-  const b = brand || { name: 'NEXORA CRM', primary: '#6366F1' };
+  const b = brand || { name: 'AetherX', primary: '#6366F1' };
   return (
     <div className="flex items-center gap-2.5 min-w-0">
       {b.logo ? (
@@ -123,7 +123,7 @@ export function BrandMark({ brand, size = 32, light }: any) {
         </span>
       )}
       <span className={cn('font-semibold tracking-tight truncate', light ? 'text-white' : 'text-[#111827]')}>
-        {b.name || 'NEXORA CRM'}
+        {b.name || 'AetherX'}
       </span>
     </div>
   );
@@ -349,7 +349,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
   const [help, setHelp] = useState(false);
 
   const unread = (state.notifications || []).filter((n: any) => !n.read).length;
-  const me = state.session || { name: 'Aisha Khan', email: 'admin@nexora.app', role: 'Admin' };
+  const me = state.session || { name: 'Admin', email: 'admin@aetherx.app', role: 'Admin' };
 
   const switchOrg = (o: any) => {
     store.set('brand', (b: any) => ({
@@ -385,7 +385,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
         trigger={
           <button className="hidden md:flex items-center gap-2 h-9 px-2.5 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 text-sm font-medium max-w-[200px]">
             <Building2 className="w-4 h-4 text-slate-500" />
-            <span className="truncate">{state.brand?.name || 'NEXORA CRM'}</span>
+            <span className="truncate">{state.brand?.name || 'AetherX'}</span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
         }
