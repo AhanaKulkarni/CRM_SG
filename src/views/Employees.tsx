@@ -11,7 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Mail, Phone, MapPin, Plus, Check } from 'lucide-react';
+import { Mail, Phone, MapPin, Plus, Check, UserPlus, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { FIELDS, DEPTS, ROLES } from '@/lib/fields';
 import {
@@ -46,6 +46,37 @@ export default function EmployeesView() {
   const [dept, setDept] = useState('All');
   const [prof, setProf] = useState<any>(null);
   const [adding, setAdding] = useState(false);
+  const [addingUser, setAddingUser] = useState(false);
+  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'Caller', designation: 'Telecaller' });
+  const [showPw, setShowPw] = useState(false);
+  const [userLoading, setUserLoading] = useState(false);
+
+  const handleCreateUser = async () => {
+    if (!userForm.name || !userForm.email || !userForm.password) {
+      toast.error('Name, email and password are required.');
+      return;
+    }
+    setUserLoading(true);
+    try {
+      const res = await fetch('/api/auth/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create user');
+      toast.success(`Account created for ${data.user.name}`, {
+        description: `They can now log in with ${data.user.email}`,
+      });
+      setAddingUser(false);
+      setUserForm({ name: '', email: '', password: '', role: 'Caller', designation: 'Telecaller' });
+      store.refresh();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
   const employees = state.employees || [];
   const activeCount = employees.filter((e: any) => e.status === 'Active').length;
@@ -91,10 +122,16 @@ export default function EmployeesView() {
         title="Employees"
         subtitle="Your team directory, roles, attendance and performance."
         actions={
-          <Button onClick={() => setAdding(true)} data-testid="employee-add-btn">
-            <Plus className="w-4 h-4" />
-            Add employee
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setAddingUser(true)} data-testid="add-user-account-btn">
+              <UserPlus className="w-4 h-4" />
+              Add Login Account
+            </Button>
+            <Button onClick={() => setAdding(true)} data-testid="employee-add-btn">
+              <Plus className="w-4 h-4" />
+              Add employee
+            </Button>
+          </div>
         }
       />
 
@@ -416,7 +453,7 @@ export default function EmployeesView() {
         onClose={() => setAdding(false)}
         title="Add employee"
         fields={FIELDS.employees()}
-        initial={{ status: 'Active', role: 'Agent', dept: 'Sales' }}
+        initial={{ status: 'Active', role: 'Caller', dept: 'Telecalling' }}
         onSubmit={(v: any) => {
           store.add('employees', {
             attendance: 95,
@@ -430,6 +467,83 @@ export default function EmployeesView() {
           toast.success('Employee added');
         }}
       />
+
+      {/* Add Login Account Modal */}
+      <Modal
+        open={addingUser}
+        onClose={() => setAddingUser(false)}
+        title="Create Login Account"
+        description="Create CRM login credentials for a team member. They will be able to log in with these credentials."
+        testid="add-user-modal"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#111827] mb-1">Full Name</label>
+            <input
+              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand transition-colors"
+              placeholder="e.g. Rahul Sharma"
+              value={userForm.name}
+              onChange={(e) => setUserForm((f) => ({ ...f, name: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#111827] mb-1">Email</label>
+            <input
+              type="email"
+              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand transition-colors"
+              placeholder="rahul@yourcompany.com"
+              value={userForm.email}
+              onChange={(e) => setUserForm((f) => ({ ...f, email: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#111827] mb-1">Role</label>
+            <select
+              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand bg-white transition-colors"
+              value={userForm.role}
+              onChange={(e) => setUserForm((f) => ({ ...f, role: e.target.value }))}
+            >
+              <option value="Caller">Caller (Telecalling access only)</option>
+              <option value="Admin">Admin (Full access)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#111827] mb-1">Designation</label>
+            <input
+              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand transition-colors"
+              placeholder="e.g. Telecaller, Sales Executive"
+              value={userForm.designation}
+              onChange={(e) => setUserForm((f) => ({ ...f, designation: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#111827] mb-1">Password</label>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 pr-10 text-sm outline-none focus:border-brand transition-colors"
+                placeholder="Minimum 4 characters"
+                value={userForm.password}
+                onChange={(e) => setUserForm((f) => ({ ...f, password: e.target.value }))}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                onClick={() => setShowPw((s) => !s)}
+              >
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="secondary" onClick={() => setAddingUser(false)}>Cancel</Button>
+            <Button onClick={handleCreateUser} disabled={userLoading}>
+              <KeyRound className="w-4 h-4" />
+              {userLoading ? 'Creating…' : 'Create Account'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

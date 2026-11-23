@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { notFound } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 import OverviewView from '@/views/Overview';
 import { LeadsView } from '@/views/Leads';
@@ -12,17 +12,12 @@ import MarketingView from '@/views/Marketing';
 import { TelecallingView } from '@/views/Telecalling';
 import EmployeesView from '@/views/Employees';
 import ChatView from '@/views/Chat';
-import InvoicesView from '@/views/Invoices';
-import {
-  AIAssistantView,
-  AICallingView,
-  AIChatbotView,
-  AutomationView,
-} from '@/views/AI';
+import { AIAssistantView } from '@/views/AI';
 import ReportsView from '@/views/Reports';
 import IntegrationsView from '@/views/Integrations';
 import SupportView from '@/views/Support';
 import SettingsView, { WhiteLabelView, SubscriptionView } from '@/views/Settings';
+import { useStore } from '@/lib/store';
 
 interface PageProps {
   params: {
@@ -30,55 +25,104 @@ interface PageProps {
   };
 }
 
+// Pages only Admins can access
+const ADMIN_ONLY_PAGES = [
+  'overview',
+  'customers',
+  'marketing',
+  'employees',
+  'ai-assistant',
+  'reports',
+  'integrations',
+  'support',
+  'subscription',
+  'settings',
+  'white-label',
+];
+
+function RoleGuard({ page, children }: { page: string; children: React.ReactNode }) {
+  const { state } = useStore();
+  const router = useRouter();
+  const role = state.session?.role;
+
+  useEffect(() => {
+    // If session is loaded and user is a Caller trying to access Admin-only page
+    if (role && role !== 'Admin' && role !== 'Super Admin' && ADMIN_ONLY_PAGES.includes(page)) {
+      router.replace('/app/leads');
+    }
+  }, [role, page, router]);
+
+  // Show nothing while redirecting
+  if (role && role !== 'Admin' && role !== 'Super Admin' && ADMIN_ONLY_PAGES.includes(page)) {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
 export default function DynamicAppPage({ params }: PageProps) {
   const page = params.page;
 
+  let content: React.ReactNode;
+
   switch (page) {
     case 'overview':
-      return <OverviewView />;
+      content = <OverviewView />;
+      break;
     case 'leads':
-      return <LeadsView />;
+      content = <LeadsView />;
+      break;
     case 'customers':
-      return <CustomersView />;
+      content = <CustomersView />;
+      break;
     case 'tasks':
-      return <TasksView />;
+      content = <TasksView />;
+      break;
     case 'calendar':
-      return <CalendarView />;
+      content = <CalendarView />;
+      break;
     case 'reminders':
-      return <RemindersView />;
+      content = <RemindersView />;
+      break;
     case 'marketing':
-      return <MarketingView />;
+      content = <MarketingView />;
+      break;
     case 'telecalling':
-      return <TelecallingView />;
+      content = <TelecallingView />;
+      break;
     case 'employees':
-      return <EmployeesView />;
+      content = <EmployeesView />;
+      break;
     case 'chat':
-      return <ChatView />;
+      content = <ChatView />;
+      break;
     case 'notes':
-      return <NotesView />;
-    case 'invoices':
-      return <InvoicesView />;
+      content = <NotesView />;
+      break;
     case 'ai-assistant':
-      return <AIAssistantView />;
-    case 'ai-calling':
-      return <AICallingView />;
-    case 'ai-chatbot':
-      return <AIChatbotView />;
-    case 'automation':
-      return <AutomationView />;
+      content = <AIAssistantView />;
+      break;
     case 'reports':
-      return <ReportsView />;
+      content = <ReportsView />;
+      break;
     case 'integrations':
-      return <IntegrationsView />;
+      content = <IntegrationsView />;
+      break;
     case 'support':
-      return <SupportView />;
+      content = <SupportView />;
+      break;
     case 'subscription':
-      return <SubscriptionView />;
+      content = <SubscriptionView />;
+      break;
     case 'settings':
-      return <SettingsView />;
+      content = <SettingsView />;
+      break;
     case 'white-label':
-      return <WhiteLabelView />;
+      content = <WhiteLabelView />;
+      break;
     default:
-      return <OverviewView />;
+      content = <LeadsView />;
   }
+
+  return <RoleGuard page={page}>{content}</RoleGuard>;
 }

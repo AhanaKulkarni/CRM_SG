@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import bcrypt from 'bcryptjs';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
@@ -34,19 +33,17 @@ if (databaseUrl) {
 
 // Initial seed data for essential setup (Zero demo records for business data)
 function getInitialDbState() {
-  const hash = bcrypt.hashSync('demo1234', 10);
   const now = new Date().toISOString();
-  const today = now.slice(0, 10);
   const defaultOrgId = '00000000-0000-0000-0000-000000000001';
 
   return {
     organisations: [
       {
         id: defaultOrgId,
-        name: 'NEXORA CRM',
-        domain: 'demo.nexora.app',
-        plan: 'Pro',
-        users: 4,
+        name: 'My Workspace',
+        domain: 'crm.local',
+        plan: 'Growth',
+        users: 1,
         status: 'Active',
         primaryColor: '#6366F1',
         secondaryColor: '#8B5CF6',
@@ -55,88 +52,11 @@ function getInitialDbState() {
         updatedAt: now,
       },
     ],
-    authorisedUsers: [
-      {
-        id: '10000000-0000-0000-0000-000000000001',
-        orgId: defaultOrgId,
-        name: 'Aisha Khan',
-        email: 'admin@nexora.app',
-        passwordHash: hash,
-        role: 'Admin',
-        designation: 'Head of Sales',
-        phone: '+91 98200 11001',
-        avatar: '',
-        status: 'Active',
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: '10000000-0000-0000-0000-000000000002',
-        orgId: defaultOrgId,
-        name: 'Platform Owner',
-        email: 'superadmin@nexora.app',
-        passwordHash: hash,
-        role: 'Super Admin',
-        designation: 'Platform Administrator',
-        phone: '+91 98200 11002',
-        avatar: '',
-        status: 'Active',
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: '10000000-0000-0000-0000-000000000003',
-        orgId: defaultOrgId,
-        name: 'Rohan Mehta',
-        email: 'manager@nexora.app',
-        passwordHash: hash,
-        role: 'Standard User',
-        designation: 'Senior Account Executive',
-        phone: '+91 98200 11003',
-        avatar: '',
-        status: 'Active',
-        createdAt: now,
-        updatedAt: now,
-      },
-      {
-        id: '10000000-0000-0000-0000-000000000004',
-        orgId: defaultOrgId,
-        name: 'Priya Nair',
-        email: 'agent@nexora.app',
-        passwordHash: hash,
-        role: 'Standard User',
-        designation: 'Account Executive',
-        phone: '+91 98200 11004',
-        avatar: '',
-        status: 'Active',
-        createdAt: now,
-        updatedAt: now,
-      },
-    ],
+    // No pre-seeded user accounts — users register via /login (Register tab)
+    authorisedUsers: [],
     sessions: [],
-    organisationSettings: [
-      {
-        id: '20000000-0000-0000-0000-000000000001',
-        orgId: defaultOrgId,
-        brandName: 'NEXORA CRM',
-        brandShort: 'Nexora',
-        logo: '',
-        favicon: '',
-        primaryColor: '#6366F1',
-        secondaryColor: '#8B5CF6',
-        loginHeadline: 'Accelerate your entire revenue engine',
-        loginSub: 'Manage leads, automate customer journeys, issue GST invoices and run AI-assisted telecalling in one command center.',
-        legalName: 'Nexora Technologies Pvt. Ltd.',
-        gstNumber: '27AADCN1234F1Z8',
-        billingEmail: 'finance@nexora.app',
-        phone: '+91 22 4912 8800',
-        website: 'https://nexora.app',
-        address: 'BKC, Bandra East, Mumbai, Maharashtra 400051',
-        currency: 'INR',
-        timezone: 'Asia/Kolkata',
-        updatedAt: now,
-      },
-    ],
+    organisationSettings: [],
+    // Organisation settings added when first admin registers
     // Essential empty business tables per Part 23
     employees: [],
     leads: [],
@@ -149,7 +69,7 @@ function getInitialDbState() {
     marketingCampaigns: [],
     callLogs: [],
     notes: [],
-    invoices: [],
+    // invoices removed — not a CRM feature
     chatChannels: [
       { id: 'general', name: 'general', type: 'channel', orgId: defaultOrgId, createdAt: now },
       { id: 'sales', name: 'sales', type: 'channel', orgId: defaultOrgId, createdAt: now },
@@ -158,32 +78,7 @@ function getInitialDbState() {
     ],
     chatMessages: [],
     supportTickets: [],
-    automationWorkflows: [
-      {
-        id: 'w0',
-        orgId: defaultOrgId,
-        name: 'New lead auto-assignment',
-        trigger: 'New lead received',
-        conditions: [{ field: 'Source', op: 'is any of', value: 'Facebook, Instagram, Website' }],
-        actions: ['Assign employee (round-robin)', 'Send notification', 'Schedule follow-up (+1 day)', 'AI calling simulation'],
-        active: false,
-        runs: 0,
-        lastRun: null,
-        createdAt: now,
-      },
-      {
-        id: 'w1',
-        orgId: defaultOrgId,
-        name: 'Overdue invoice reminder',
-        trigger: 'Invoice overdue',
-        conditions: [{ field: 'Amount', op: 'greater than', value: '₹10,000' }],
-        actions: ['Send email reminder', 'Create task for finance', 'Send WhatsApp message'],
-        active: false,
-        runs: 0,
-        lastRun: null,
-        createdAt: now,
-      },
-    ],
+    automationWorkflows: [],
     workflowRuns: [],
     integrations: [
       { id: 'int-meta', orgId: defaultOrgId, name: 'Meta', connected: false, config: {}, lastSync: null },
@@ -209,17 +104,7 @@ function getInitialDbState() {
       },
     ],
     enquiries: [],
-    subscriptions: [
-      {
-        id: 'sub-0',
-        orgId: defaultOrgId,
-        plan: 'Pro',
-        seats: 4,
-        renews: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10),
-        billingCycle: 'monthly',
-        updatedAt: now,
-      },
-    ],
+    subscriptions: [],
     billingHistory: [],
     formFields: [
       { id: 'f0', label: 'Full name', type: 'text', required: true },

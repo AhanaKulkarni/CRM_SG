@@ -73,14 +73,14 @@ export async function loginUser(email: string, passwordPlain: string) {
 
   // If user does not exist in local db yet (pure setup or serverless reset), allow first-time admin setup
   if (!user) {
-    // If the database has no authorized users or user is creating their account
+    // Only allow auto-creation on completely fresh workspace (no users at all)
     const allUsers = localDb.get('authorisedUsers');
-    if (allUsers.length === 0 || cleanEmail.includes('@')) {
+    if (allUsers.length === 0) {
       const orgs = localDb.get('organisations');
       const defaultOrg = orgs[0] || localDb.insert('organisations', {
         name: 'My Workspace',
-        domain: cleanEmail.split('@')[1] || 'nexora.app',
-        plan: 'Pro',
+        domain: cleanEmail.split('@')[1] || 'crm.local',
+        plan: 'Growth',
         users: 1,
         status: 'Active',
         primaryColor: '#6366F1',
@@ -101,7 +101,7 @@ export async function loginUser(email: string, passwordPlain: string) {
         status: 'Active',
       });
     } else {
-      throw new Error('Invalid email or password. Please check your credentials or create an account.');
+      throw new Error('Invalid email or password. Please check your credentials or ask your admin to create your account.');
     }
   }
 

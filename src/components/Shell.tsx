@@ -16,17 +16,11 @@ import {
   Briefcase,
   MessagesSquare,
   StickyNote,
-  Receipt,
   Sparkles,
-  PhoneOutgoing,
-  Bot,
-  Workflow,
   BarChart3,
   Plug,
-  LifeBuoy,
   Settings as SettingsIcon,
   Palette,
-  CreditCard,
   Search,
   Bell,
   Plus,
@@ -36,7 +30,6 @@ import {
   X,
   LogOut,
   ShieldCheck,
-  RotateCcw,
   Check,
   Building2,
   MoreHorizontal,
@@ -46,7 +39,8 @@ import { FIELDS } from '@/lib/fields';
 import { Avatar, FormModal, Modal, ago, cn, Button } from './kit';
 import { ChatWidget } from './ChatWidget';
 
-export const NAV = [
+// Admin sees everything
+export const NAV_ADMIN = [
   {
     section: 'Workspace',
     items: [
@@ -66,16 +60,12 @@ export const NAV = [
       ['Employees', '/app/employees', Briefcase, 'employees'],
       ['Internal Chat', '/app/chat', MessagesSquare, 'chat'],
       ['Notes', '/app/notes', StickyNote, 'notes'],
-      ['Invoices', '/app/invoices', Receipt, 'invoices'],
     ],
   },
   {
     section: 'Intelligence',
     items: [
       ['AI Assistant', '/app/ai-assistant', Sparkles, 'ai-assistant'],
-      ['AI Calling', '/app/ai-calling', PhoneOutgoing, 'ai-calling'],
-      ['AI Chatbot', '/app/ai-chatbot', Bot, 'ai-chatbot'],
-      ['Automation', '/app/automation', Workflow, 'automation'],
       ['Reports & Analytics', '/app/reports', BarChart3, 'reports'],
     ],
   },
@@ -83,13 +73,35 @@ export const NAV = [
     section: 'Administration',
     items: [
       ['Integrations', '/app/integrations', Plug, 'integrations'],
-      ['Support & Services', '/app/support', LifeBuoy, 'support'],
-      ['Subscription', '/app/subscription', CreditCard, 'subscription'],
       ['Settings', '/app/settings', SettingsIcon, 'settings'],
-      ['White-Label Configuration', '/app/white-label', Palette, 'white-label'],
+      ['White-Label', '/app/white-label', Palette, 'white-label'],
     ],
   },
 ];
+
+// Callers see only their working tools
+export const NAV_CALLER = [
+  {
+    section: 'Workspace',
+    items: [
+      ['Leads', '/app/leads', Target, 'leads'],
+      ['Telecalling', '/app/telecalling', PhoneCall, 'telecalling'],
+      ['Tasks & To-Do', '/app/tasks', CheckSquare, 'tasks'],
+      ['Calendar', '/app/calendar', CalendarDays, 'calendar'],
+      ['Reminders', '/app/reminders', BellRing, 'reminders'],
+    ],
+  },
+  {
+    section: 'Collaboration',
+    items: [
+      ['Internal Chat', '/app/chat', MessagesSquare, 'chat'],
+      ['Notes', '/app/notes', StickyNote, 'notes'],
+    ],
+  },
+];
+
+// Keep backward compat for anything importing NAV
+export const NAV = NAV_ADMIN;
 
 export function BrandMark({ brand, size = 32, light }: any) {
   const b = brand || { name: 'NEXORA CRM', primary: '#6366F1' };
@@ -120,6 +132,9 @@ export function BrandMark({ brand, size = 32, light }: any) {
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { state } = useStore();
   const pathname = usePathname();
+  const role = state.session?.role || 'Caller';
+  const isAdmin = role === 'Admin' || role === 'Super Admin';
+  const nav = isAdmin ? NAV_ADMIN : NAV_CALLER;
 
   return (
     <>
@@ -145,7 +160,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
 
         <nav className="flex-1 overflow-y-auto thin-scroll px-3 py-4 space-y-5">
-          {NAV.map((g) => (
+          {nav.map((g) => (
             <div key={g.section}>
               <p className="px-3 mb-1.5 text-[10px] font-semibold tracking-[0.14em] text-slate-500 uppercase">
                 {g.section}
@@ -175,16 +190,18 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-white/5">
-          <Link
-            href="/admin"
-            onClick={onClose}
-            data-testid="nav-admin-portal"
-            className="flex items-center gap-3 px-3 h-10 rounded-lg bg-white/5 text-slate-300 text-[13px] hover:bg-white/10 transition-colors font-medium"
-          >
-            <ShieldCheck className="w-4 h-4 text-brand" /> Super Admin Portal
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="p-3 border-t border-white/5">
+            <Link
+              href="/admin"
+              onClick={onClose}
+              data-testid="nav-admin-portal"
+              className="flex items-center gap-3 px-3 h-10 rounded-lg bg-white/5 text-slate-300 text-[13px] hover:bg-white/10 transition-colors font-medium"
+            >
+              <ShieldCheck className="w-4 h-4 text-brand" /> Super Admin Portal
+            </Link>
+          </div>
+        )}
       </aside>
     </>
   );
@@ -248,10 +265,6 @@ function GlobalSearch() {
         .filter((e: any) => m(e.name))
         .slice(0, 3)
         .map((e: any) => ({ k: 'Employee', t: e.name, s: e.designation, to: '/app/employees' })),
-      ...(state.invoices || [])
-        .filter((i: any) => m(i.number) || m(i.customer))
-        .slice(0, 3)
-        .map((i: any) => ({ k: 'Invoice', t: i.number, s: i.customer, to: '/app/invoices' })),
       ...(state.tickets || [])
         .filter((t: any) => m(t.subject) || m(t.number))
         .slice(0, 3)
@@ -313,7 +326,6 @@ const QUICK = [
   ['Customer', 'customers'],
   ['Task', 'tasks'],
   ['Meeting', 'events'],
-  ['Support ticket', 'tickets'],
   ['Reminder', 'reminders'],
 ];
 
@@ -429,14 +441,6 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
                 New {l.toLowerCase()}
               </button>
             ))}
-            <button
-              data-close
-              data-testid="quick-create-invoice"
-              onClick={() => router.push('/app/invoices?new=1')}
-              className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-50 font-medium text-slate-700"
-            >
-              New invoice
-            </button>
           </div>
         </Dropdown>
 
@@ -525,33 +529,35 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
               {me.email} · {me.role}
             </p>
           </div>
-          <div className="p-1.5 text-sm">
-            <button
-              data-close
-              onClick={() => router.push('/app/settings')}
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-            >
-              <SettingsIcon className="w-4 h-4 text-slate-400" />
-              Account settings
-            </button>
-            <button
-              data-close
-              onClick={() => router.push('/admin')}
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-            >
-              <ShieldCheck className="w-4 h-4 text-brand" />
-              Super Admin Portal
-            </button>
-            <button
-              data-close
-              data-testid="logout-btn"
-              onClick={handleLogout}
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Log out
-            </button>
-          </div>
+            <div className="p-1.5 text-sm">
+              <button
+                data-close
+                onClick={() => router.push('/app/settings')}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+              >
+                <SettingsIcon className="w-4 h-4 text-slate-400" />
+                Account settings
+              </button>
+              {(me.role === 'Admin' || me.role === 'Super Admin') && (
+                <button
+                  data-close
+                  onClick={() => router.push('/admin')}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <ShieldCheck className="w-4 h-4 text-brand" />
+                  Super Admin Portal
+                </button>
+              )}
+              <button
+                data-close
+                data-testid="logout-btn"
+                onClick={handleLogout}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Log out
+              </button>
+            </div>
         </Dropdown>
       </div>
 

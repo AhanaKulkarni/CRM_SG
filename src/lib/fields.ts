@@ -3,7 +3,7 @@ export const STAGES = ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation
 export const PRIORITIES = ['High', 'Medium', 'Low'];
 export const TASK_STATUS = ['To Do', 'In Progress', 'Review', 'Done'];
 export const DEPTS = ['Sales', 'Marketing', 'Support', 'Telecalling', 'Finance', 'Operations'];
-export const ROLES = ['Admin', 'Manager', 'Sales Executive', 'Agent', 'Viewer'];
+export const ROLES = ['Admin', 'Caller'];
 export const CITIES = ['Mumbai', 'Bengaluru', 'Delhi', 'Pune', 'Hyderabad', 'Chennai', 'Ahmedabad', 'Kolkata', 'Jaipur', 'Kochi'];
 
 const emp = (s: any) => (s?.employees || []).map((e: any) => e.name);
@@ -104,7 +104,7 @@ export const FIELDS = {
   orgs: () => [
     { key: 'name', label: 'Organisation', required: true },
     { key: 'domain', label: 'Domain' },
-    { key: 'plan', label: 'Plan', type: 'select', options: ['Basic', 'Pro'] },
+    { key: 'plan', label: 'Plan', type: 'select', options: ['Starter', 'Growth', 'Pro'] },
     { key: 'users', label: 'Users', type: 'number' },
     { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Trial', 'Suspended'] },
     { key: 'primaryColor', label: 'Primary colour', type: 'color' },
