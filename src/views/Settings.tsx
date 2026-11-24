@@ -56,19 +56,20 @@ function readFile(e: React.ChangeEvent<HTMLInputElement>, cb: (data: string) => 
 export function WhiteLabelView() {
   const store = useStore();
   const b = store.state.brand || {
-    name: 'AetherX',
-    short: 'AetherX',
-    primary: '#6366F1',
-    secondary: '#8B5CF6',
-    loginHeadline: 'The Intelligent Business Management Platform',
-    loginSub: 'Manage leads, customers, telecalling, billing and AI workflows in one integrated workspace.',
+    name: 'StartAppGuru CRM',
+    short: 'StartAppGuru',
+    primary: '#1E2B6D',
+    secondary: '#22C55E',
+    logo: '/logo.png',
+    loginHeadline: 'Accelerate your entire revenue engine',
+    loginSub: 'Manage leads, run telecalling campaigns, record calls and grow your business — all in one platform.',
     company: {
-      legal: 'AetherX Technologies Pvt. Ltd.',
-      gst: '27AABCN1234F1Z8',
-      email: 'hello@aetherx.app',
-      phone: '+91 22 4988 7700',
-      website: 'https://aetherx.app',
-      address: 'Level 14, Tower B, Peninsula Business Park, Lower Parel, Mumbai 400013',
+      legal: 'Start App Guru Pvt. Ltd.',
+      gst: '',
+      email: 'hello@startappguru.com',
+      phone: '',
+      website: 'https://startappguru.com',
+      address: '',
     },
   };
 
@@ -78,10 +79,10 @@ export function WhiteLabelView() {
 
   const [pv, setPv] = useState<'Dashboard' | 'Login'>('Dashboard');
   const presets = [
-    ['#6366F1', '#8B5CF6'],
+    ['#1E2B6D', '#22C55E'],
     ['#0D9488', '#0EA5E9'],
+    ['#6366F1', '#8B5CF6'],
     ['#EA580C', '#F59E0B'],
-    ['#DC2626', '#111827'],
     ['#2563EB', '#7C3AED'],
     ['#16A34A', '#65A30D'],
   ];
@@ -97,21 +98,21 @@ export function WhiteLabelView() {
             data-testid="brand-reset-btn"
             onClick={() => {
               store.set('brand', {
-                name: 'AetherX',
-                short: 'AetherX',
-                primary: '#6366F1',
-                secondary: '#8B5CF6',
-                loginHeadline: 'The Intelligent Business Management Platform',
+                name: 'StartAppGuru CRM',
+                short: 'StartAppGuru',
+                primary: '#1E2B6D',
+                secondary: '#22C55E',
+                logo: '/logo.png',
+                loginHeadline: 'Accelerate your entire revenue engine',
                 loginSub:
-                  'Manage leads, customers, telecalling, billing and AI workflows in one integrated workspace.',
+                  'Manage leads, run telecalling campaigns, record calls and grow your business — all in one platform.',
                 company: {
-                  legal: 'AetherX Technologies Pvt. Ltd.',
-                  gst: '27AABCN1234F1Z8',
-                  email: 'hello@aetherx.app',
-                  phone: '+91 22 4988 7700',
-                  website: 'https://aetherx.app',
-                  address:
-                    'Level 14, Tower B, Peninsula Business Park, Lower Parel, Mumbai 400013',
+                  legal: 'Start App Guru Pvt. Ltd.',
+                  gst: '',
+                  email: 'hello@startappguru.com',
+                  phone: '',
+                  website: 'https://startappguru.com',
+                  address: '',
                 },
               });
               toast.success('Branding reset to default');

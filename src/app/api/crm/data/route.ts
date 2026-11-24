@@ -13,20 +13,20 @@ export async function GET() {
   const org = localDb.get('organisations')[0] || {};
 
   const brand = {
-    name: settings.brandName || org.name || 'AetherX',
-    short: settings.brandShort || 'AetherX',
-    logo: settings.logo || '',
-    favicon: settings.favicon || '',
-    primary: settings.primaryColor || '#6366F1',
-    secondary: settings.secondaryColor || '#8B5CF6',
+    name: settings.brandName || org.name || 'StartAppGuru CRM',
+    short: settings.brandShort || 'StartAppGuru',
+    logo: settings.logo || org.logo || '/logo.png',
+    favicon: settings.favicon || '/logo.png',
+    primary: settings.primaryColor || org.primaryColor || '#1E2B6D',
+    secondary: settings.secondaryColor || org.secondaryColor || '#22C55E',
     loginHeadline: settings.loginHeadline || 'Accelerate your entire revenue engine',
-    loginSub: settings.loginSub || 'Manage leads, run telecalling campaigns, track customers and grow your business — all in one platform.',
+    loginSub: settings.loginSub || 'Manage leads, run telecalling campaigns, record calls and grow your business — all in one platform.',
     company: {
-      legal: settings.legalName || 'AetherX Technologies Pvt. Ltd.',
+      legal: settings.legalName || 'Start App Guru Pvt. Ltd.',
       gst: settings.gstNumber || '',
-      email: settings.billingEmail || 'hello@aetherx.app',
+      email: settings.billingEmail || 'hello@startappguru.com',
       phone: settings.phone || '',
-      website: settings.website || 'https://aetherx.app',
+      website: settings.website || 'https://startappguru.com',
       address: settings.address || '',
     },
   };

@@ -43,13 +43,14 @@ function getInitialDbState() {
     organisations: [
       {
         id: defaultOrgId,
-        name: 'AetherX',
+        name: 'StartAppGuru CRM',
         domain: 'aetherx.app',
         plan: 'Pro',
         users: 4,
         status: 'Active',
-        primaryColor: '#6366F1',
-        secondaryColor: '#8B5CF6',
+        logo: '/logo.png',
+        primaryColor: '#1E2B6D',
+        secondaryColor: '#22C55E',
         region: 'Mumbai (ap-south-1)',
         createdAt: now,
         updatedAt: now,

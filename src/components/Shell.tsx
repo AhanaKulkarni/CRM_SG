@@ -104,26 +104,26 @@ export const NAV_CALLER = [
 export const NAV = NAV_ADMIN;
 
 export function BrandMark({ brand, size = 32, light }: any) {
-  const b = brand || { name: 'AetherX', primary: '#6366F1' };
+  const b = brand || { name: 'StartAppGuru CRM', primary: '#1E2B6D', secondary: '#22C55E', logo: '/logo.png' };
   return (
     <div className="flex items-center gap-2.5 min-w-0">
       {b.logo ? (
         <img
           src={b.logo}
-          alt="logo"
-          className="rounded-lg object-contain bg-white shrink-0"
+          alt="StartAppGuru"
+          className="rounded-lg object-contain bg-white shrink-0 p-0.5"
           style={{ width: size, height: size }}
         />
       ) : (
         <span
           className="rounded-lg flex items-center justify-center font-bold text-white shrink-0 shadow-sm"
-          style={{ width: size, height: size, background: b.primary || '#6366F1', fontSize: size * 0.48 }}
+          style={{ width: size, height: size, background: b.primary || '#1E2B6D', fontSize: size * 0.48 }}
         >
-          {(b.short || b.name || 'N')[0]}
+          {(b.short || b.name || 'S')[0]}
         </span>
       )}
       <span className={cn('font-semibold tracking-tight truncate', light ? 'text-white' : 'text-[#111827]')}>
-        {b.name || 'AetherX'}
+        {b.name || 'StartAppGuru CRM'}
       </span>
     </div>
   );

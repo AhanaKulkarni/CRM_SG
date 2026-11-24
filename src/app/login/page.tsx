@@ -239,26 +239,26 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => submit(undefined, 'admin@aetherx.app', 'admin@aetherx', '/app/overview')}
-                className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
                 title="Sign in as Administrator"
               >
-                👑 Admin
+                Admin
               </button>
               <button
                 type="button"
                 onClick={() => submit(undefined, 'caller1@aetherx.app', 'admin@aetherx', '/app/overview')}
-                className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
                 title="Sign in as Caller 1"
               >
-                📞 Caller 1
+                Caller 1
               </button>
               <button
                 type="button"
                 onClick={() => submit(undefined, 'superadmin@aetherx.app', 'admin@aetherx', '/admin')}
-                className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                className="px-3 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
                 title="Sign in as Super Admin"
               >
-                🛡️ Super Admin
+                Super Admin
               </button>
             </div>
           </div>

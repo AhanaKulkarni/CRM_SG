@@ -3,8 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --brand: #6366F1;
-  --brand2: #8B5CF6;
+  --brand: #1E2B6D;
+  --brand-hover: #162054;
+  --brand2: #22C55E;
+  --brand2-hover: #16A34A;
+  --brand-accent: #EAB308;
   --brand-ring: color-mix(in srgb, var(--brand) 22%, transparent);
 }
 

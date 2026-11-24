@@ -8,7 +8,7 @@ import { Card, Avatar, cn } from '@/components/kit';
 
 const REPLIES = [
   'Got it, thanks!',
-  'On it 👍',
+  'On it right now.',
   'Sounds good — I will update the CRM.',
   'Can we discuss this in the stand-up?',
   'Great work team!',
