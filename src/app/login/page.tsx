@@ -230,15 +230,37 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick-start shortcut */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-            <button
-              type="button"
-              onClick={() => submit(undefined, 'admin@nexora.app', 'demo1234', '/app/overview')}
-              className="text-xs text-slate-500 hover:text-brand font-medium transition-colors"
-            >
-              Or sign in with demo admin credentials →
-            </button>
+          {/* Quick demo accounts */}
+          <div className="mt-6 pt-5 border-t border-slate-100 text-center space-y-2">
+            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Quick Sign-in (Password: admin@aetherx)
+            </p>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => submit(undefined, 'admin@aetherx.app', 'admin@aetherx', '/app/overview')}
+                className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                title="Sign in as Administrator"
+              >
+                👑 Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => submit(undefined, 'caller1@aetherx.app', 'admin@aetherx', '/app/overview')}
+                className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                title="Sign in as Caller 1"
+              >
+                📞 Caller 1
+              </button>
+              <button
+                type="button"
+                onClick={() => submit(undefined, 'superadmin@aetherx.app', 'admin@aetherx', '/admin')}
+                className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                title="Sign in as Super Admin"
+              >
+                🛡️ Super Admin
+              </button>
+            </div>
           </div>
         </div>
       </div>

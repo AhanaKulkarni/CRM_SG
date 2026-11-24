@@ -32,12 +32,12 @@ if (databaseUrl) {
   }
 }
 
-// Initial seed data — includes demo accounts for AetherX
+// Initial seed data — includes accounts for AetherX (1 Admin + 3 Callers + 1 Super Admin)
 function getInitialDbState() {
   const now = new Date().toISOString();
   const defaultOrgId = '00000000-0000-0000-0000-000000000001';
-  // Pre-hash demo1234
-  const demoHash = bcrypt.hashSync('demo1234', 10);
+  // Standard password for initial accounts: admin@aetherx
+  const standardHash = bcrypt.hashSync('admin@aetherx', 10);
 
   return {
     organisations: [
@@ -45,8 +45,8 @@ function getInitialDbState() {
         id: defaultOrgId,
         name: 'AetherX',
         domain: 'aetherx.app',
-        plan: 'Growth',
-        users: 2,
+        plan: 'Pro',
+        users: 4,
         status: 'Active',
         primaryColor: '#6366F1',
         secondaryColor: '#8B5CF6',
@@ -55,16 +55,16 @@ function getInitialDbState() {
         updatedAt: now,
       },
     ],
-    // Demo accounts — seeded on fresh install
+    // Accounts per StartAppGuru Rulebook (1 Admin + 3 Callers + Super Admin)
     authorisedUsers: [
       {
         id: '10000000-0000-0000-0000-000000000001',
         orgId: defaultOrgId,
         name: 'Workspace Admin',
-        email: 'admin@nexora.app',
-        passwordHash: demoHash,
+        email: 'admin@aetherx.app',
+        passwordHash: standardHash,
         role: 'Admin',
-        designation: 'Head of Sales',
+        designation: 'Head of Sales & Operations',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -75,10 +75,52 @@ function getInitialDbState() {
         id: '10000000-0000-0000-0000-000000000002',
         orgId: defaultOrgId,
         name: 'Platform Owner',
-        email: 'superadmin@nexora.app',
-        passwordHash: demoHash,
+        email: 'superadmin@aetherx.app',
+        passwordHash: standardHash,
         role: 'Super Admin',
         designation: 'Platform Administrator',
+        phone: '',
+        avatar: '',
+        status: 'Active',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: '10000000-0000-0000-0000-000000000003',
+        orgId: defaultOrgId,
+        name: 'Caller 1',
+        email: 'caller1@aetherx.app',
+        passwordHash: standardHash,
+        role: 'Caller',
+        designation: 'Telecalling Executive',
+        phone: '',
+        avatar: '',
+        status: 'Active',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: '10000000-0000-0000-0000-000000000004',
+        orgId: defaultOrgId,
+        name: 'Caller 2',
+        email: 'caller2@aetherx.app',
+        passwordHash: standardHash,
+        role: 'Caller',
+        designation: 'Telecalling Executive',
+        phone: '',
+        avatar: '',
+        status: 'Active',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: '10000000-0000-0000-0000-000000000005',
+        orgId: defaultOrgId,
+        name: 'Caller 3',
+        email: 'caller3@aetherx.app',
+        passwordHash: standardHash,
+        role: 'Caller',
+        designation: 'Telecalling Executive',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -88,9 +130,65 @@ function getInitialDbState() {
     ],
     sessions: [],
     organisationSettings: [],
-    // Organisation settings added when first admin registers
-    // Essential empty business tables per Part 23
-    employees: [],
+    // 4 billable team members in employee directory
+    employees: [
+      {
+        id: 'emp-admin',
+        orgId: defaultOrgId,
+        name: 'Workspace Admin',
+        email: 'admin@aetherx.app',
+        phone: '+91 98000 00001',
+        dept: 'Sales',
+        designation: 'Head of Sales & Operations',
+        role: 'Admin',
+        status: 'Active',
+        location: 'Mumbai',
+        score: 95,
+        createdAt: now,
+      },
+      {
+        id: 'emp-caller1',
+        orgId: defaultOrgId,
+        name: 'Caller 1',
+        email: 'caller1@aetherx.app',
+        phone: '+91 98000 00002',
+        dept: 'Telecalling',
+        designation: 'Telecalling Executive',
+        role: 'Caller',
+        status: 'Active',
+        location: 'Mumbai',
+        score: 88,
+        createdAt: now,
+      },
+      {
+        id: 'emp-caller2',
+        orgId: defaultOrgId,
+        name: 'Caller 2',
+        email: 'caller2@aetherx.app',
+        phone: '+91 98000 00003',
+        dept: 'Telecalling',
+        designation: 'Telecalling Executive',
+        role: 'Caller',
+        status: 'Active',
+        location: 'Mumbai',
+        score: 90,
+        createdAt: now,
+      },
+      {
+        id: 'emp-caller3',
+        orgId: defaultOrgId,
+        name: 'Caller 3',
+        email: 'caller3@aetherx.app',
+        phone: '+91 98000 00004',
+        dept: 'Telecalling',
+        designation: 'Telecalling Executive',
+        role: 'Caller',
+        status: 'Active',
+        location: 'Mumbai',
+        score: 87,
+        createdAt: now,
+      },
+    ],
     leads: [],
     customers: [],
     tasks: [],
