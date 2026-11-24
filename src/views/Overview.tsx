@@ -64,7 +64,7 @@ export default function OverviewView() {
 
   // Computed metrics from real database records
   const totalLeads = leads.length;
-  const wonLeads = leads.filter((l: any) => l.status === 'Won').length;
+  const wonLeads = leads.filter((l: any) => ['Won', 'Converted'].includes(l.status)).length;
   const activeCustomers = customers.filter((c: any) => c.status === 'Active').length;
   const convRate = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) + '%' : '0.0%';
 
@@ -73,7 +73,7 @@ export default function OverviewView() {
   const revenueTotal = paidInvoices.reduce((a: number, i: any) => a + invTotal(i), 0);
 
   const activeEmployees = employees.filter((e: any) => e.status === 'Active').length;
-  const completedTasks = tasks.filter((t: any) => t.status === 'Done').length;
+  const completedTasks = tasks.filter((t: any) => ['Done', 'Completed'].includes(t.status)).length;
   const taskCompRate = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) + '%' : '0%';
 
   const todayIso = new Date().toISOString().slice(0, 10);
@@ -114,10 +114,10 @@ export default function OverviewView() {
   // Lead Funnel
   const funnel = [
     ['Leads', totalLeads],
-    ['Contacted', leads.filter((l: any) => ['Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won'].includes(l.status)).length],
-    ['Qualified', leads.filter((l: any) => ['Qualified', 'Proposal', 'Negotiation', 'Won'].includes(l.status)).length],
-    ['Proposal', leads.filter((l: any) => ['Proposal', 'Negotiation', 'Won'].includes(l.status)).length],
-    ['Won', wonLeads],
+    ['Contacted', leads.filter((l: any) => ['Contacted', 'Interested', 'Follow-up Scheduled', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Converted'].includes(l.status)).length],
+    ['Qualified', leads.filter((l: any) => ['Qualified', 'Proposal', 'Negotiation', 'Won', 'Converted'].includes(l.status)).length],
+    ['Proposal / Negotiation', leads.filter((l: any) => ['Proposal', 'Negotiation', 'Won', 'Converted'].includes(l.status)).length],
+    ['Won / Converted', wonLeads],
   ];
 
   // Sources distribution

@@ -1,7 +1,35 @@
 export const SOURCES = ['Facebook', 'Instagram', 'Website', 'Referral', 'Google Ads', 'LinkedIn', 'Walk-in'];
-export const STAGES = ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'];
+export const STAGES = [
+  'New',
+  'Assigned',
+  'Attempted',
+  'Contacted',
+  'Interested',
+  'Follow-up Scheduled',
+  'Qualified',
+  'Converted',
+  'Not Interested',
+  'Do Not Call',
+];
 export const PRIORITIES = ['High', 'Medium', 'Low'];
-export const TASK_STATUS = ['To Do', 'In Progress', 'Review', 'Done'];
+export const TASK_STATUS = ['Open', 'In Progress', 'Completed', 'Cancelled'];
+export const TECHNICAL_RESULTS = [
+  'Answered/Connected',
+  'No Answer',
+  'Busy',
+  'Failed',
+  'Rejected',
+  'Unavailable',
+];
+export const SALES_DISPOSITIONS = [
+  'Interested',
+  'Not Interested',
+  'Call Back Required',
+  'Follow-up Scheduled',
+  'Converted',
+  'Do Not Call',
+  'Pending Classification',
+];
 export const DEPTS = ['Sales', 'Marketing', 'Support', 'Telecalling', 'Finance', 'Operations'];
 export const ROLES = ['Admin', 'Caller'];
 export const CITIES = ['Mumbai', 'Bengaluru', 'Delhi', 'Pune', 'Hyderabad', 'Chennai', 'Ahmedabad', 'Kolkata', 'Jaipur', 'Kochi'];
@@ -95,10 +123,12 @@ export const FIELDS = {
     { key: 'phone', label: 'Phone' },
     { key: 'agent', label: 'Agent', type: 'select', options: emp(s) },
     { key: 'direction', label: 'Direction', type: 'select', options: ['Outbound', 'Inbound'] },
-    { key: 'disposition', label: 'Disposition', type: 'select', options: ['Interested', 'Callback', 'Not Interested', 'No Answer', 'Converted'] },
+    { key: 'technicalResult', label: 'Technical result', type: 'select', options: TECHNICAL_RESULTS },
+    { key: 'disposition', label: 'Sales disposition', type: 'select', options: SALES_DISPOSITIONS },
     { key: 'duration', label: 'Duration (sec)', type: 'number' },
     { key: 'date', label: 'Date', type: 'date' },
-    { key: 'followUp', label: 'Follow-up', type: 'date' },
+    { key: 'followUp', label: 'Follow-up date', type: 'date' },
+    { key: 'recordingUrl', label: 'Recording URL' },
     { key: 'notes', label: 'Notes', type: 'textarea', full: true },
   ],
   orgs: () => [

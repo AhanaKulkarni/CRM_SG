@@ -42,16 +42,36 @@ import {
 
 const STAGE_COLOR: Record<string, string> = {
   New: '#6366F1',
+  Assigned: '#3B82F6',
+  Attempted: '#F59E0B',
   Contacted: '#0EA5E9',
+  Interested: '#8B5CF6',
+  'Follow-up Scheduled': '#EC4899',
   Qualified: '#14B8A6',
-  Proposal: '#F59E0B',
-  Negotiation: '#8B5CF6',
+  Converted: '#10B981',
+  'Not Interested': '#64748B',
+  'Do Not Call': '#EF4444',
   Won: '#10B981',
-  Lost: '#EF4444',
+  Lost: '#64748B',
 };
 
 const todayIso = new Date().toISOString().slice(0, 10);
 const LDEF = { status: 'New', priority: 'Medium', source: 'Website', value: 50000, created: todayIso };
+
+export function checkDuplicateLead(newLead: any, allLeads: any[], currentId?: string) {
+  const normPhone = (p: string) => (p || '').replace(/\D/g, '').slice(-10);
+  const cleanEmail = (e: string) => (e || '').trim().toLowerCase();
+
+  const newP = normPhone(newLead.phone);
+  const newE = cleanEmail(newLead.email);
+
+  return (allLeads || []).find((l: any) => {
+    if (currentId && l.id === currentId) return false;
+    if (newP && newP.length >= 7 && normPhone(l.phone) === newP) return true;
+    if (newE && newE.length > 3 && cleanEmail(l.email) === newE) return true;
+    return false;
+  });
+}
 
 export function Kanban({ items = [], stages = [], field, onMove, render, colors = {}, testid }: any) {
   const [over, setOver] = useState<string | null>(null);
@@ -123,9 +143,10 @@ export function convertLead(store: any, lead: any) {
     since: new Date().toISOString().slice(0, 10),
     owner: lead.owner,
     lastContact: new Date().toISOString().slice(0, 10),
+    leadId: lead.id,
   });
-  store.update('leads', lead.id, { status: 'Won' });
-  store.log(lead.owner || 'You', 'converted lead', lead.company, 'lead');
+  store.update('leads', lead.id, { status: 'Converted' });
+  store.log(lead.owner || 'You', 'converted lead to customer', lead.company, 'lead');
   store.notify('Lead converted', `${lead.name} (${lead.company}) is now an active customer`, 'lead');
   toast.success('Lead converted to customer', { description: `${lead.company} added to Customers` });
 }
@@ -138,9 +159,18 @@ export function LeadsView() {
   const [owner, setOwner] = useState('');
   const [adding, setAdding] = useState(false);
 
-  const leads = state.leads || [];
-  const open = leads.filter((l: any) => !['Won', 'Lost'].includes(l.status));
-  const wonThisMonth = leads.filter((l: any) => l.status === 'Won').length;
+  const isCaller = state.session?.role === 'Caller';
+  const currentUser = state.session?.name;
+
+  // Caller rule: view only own assigned leads (plus unassigned if any)
+  const allLeads = state.leads || [];
+  const leads = isCaller
+    ? allLeads.filter((l: any) => l.owner === currentUser || !l.owner)
+    : allLeads;
+
+  const closedStatuses = ['Won', 'Lost', 'Converted', 'Not Interested', 'Do Not Call'];
+  const open = leads.filter((l: any) => !closedStatuses.includes(l.status));
+  const wonThisMonth = leads.filter((l: any) => ['Won', 'Converted'].includes(l.status)).length;
   const highPriority = open.filter((l: any) => l.priority === 'High').length;
   const pipelineValue = open.reduce((a: number, l: any) => a + Number(l.value || 0), 0);
 
@@ -152,19 +182,58 @@ export function LeadsView() {
         <div className="flex items-center gap-3">
           <Avatar name={l.name} size={30} />
           <div>
-            <p className="font-medium text-[#111827]">{l.name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-medium text-[#111827]">{l.name}</p>
+              {(l.dnc || l.status === 'Do Not Call') && (
+                <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">DNC</span>
+              )}
+            </div>
             <p className="text-xs text-slate-500">{l.company}</p>
           </div>
         </div>
       ),
     },
     { key: 'source', label: 'Source' },
-    { key: 'status', label: 'Stage', render: (l: any) => <Badge>{l.status}</Badge> },
+    {
+      key: 'status',
+      label: 'Stage',
+      render: (l: any) => (
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+          style={{
+            backgroundColor: `${STAGE_COLOR[l.status] || '#64748B'}15`,
+            color: STAGE_COLOR[l.status] || '#64748B',
+          }}
+        >
+          {l.status}
+        </span>
+      ),
+    },
     { key: 'priority', label: 'Priority', render: (l: any) => <Badge>{l.priority}</Badge> },
     { key: 'owner', label: 'Assigned to' },
     { key: 'value', label: 'Value', render: (l: any) => <span className="tabular-nums font-medium">{inr(l.value)}</span> },
     { key: 'created', label: 'Created', render: (l: any) => fmtDate(l.created) },
   ];
+
+  const handleAddLead = (v: any) => {
+    const dup = checkDuplicateLead(v, allLeads);
+    if (dup) {
+      toast.warning('Possible duplicate lead', {
+        description: `Phone or email already associated with ${dup.name} (${dup.company}). Flagged for review.`,
+      });
+    }
+    const leadOwner = isCaller ? (currentUser || v.owner) : v.owner;
+    store.add('leads', {
+      ...LDEF,
+      ...v,
+      owner: leadOwner,
+      assignmentHistory: leadOwner
+        ? [{ from: 'Unassigned', to: leadOwner, at: new Date().toISOString(), by: currentUser || 'Admin' }]
+        : [],
+    });
+    toast.success('Lead created');
+    setAdding(false);
+  };
 
   return (
     <div>
@@ -362,10 +431,7 @@ export function LeadsView() {
         title="New lead"
         fields={FIELDS.leads(state)}
         initial={LDEF}
-        onSubmit={(v: any) => {
-          store.add('leads', { ...LDEF, ...v });
-          toast.success('Lead created');
-        }}
+        onSubmit={handleAddLead}
       />
     </div>
   );
@@ -378,6 +444,7 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
   const params = useParams();
   const id = leadId || (params?.id as string);
 
+  const isCaller = state.session?.role === 'Caller';
   const lead = (state.leads || []).find((l: any) => l.id === id);
   const [edit, setEdit] = useState(false);
   const [del, setDel] = useState(false);
@@ -405,13 +472,18 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
   const timeline = [
     ...calls.map((c: any) => ({
       t: c.date,
-      text: `${c.direction} call by ${c.agent} — ${c.disposition}`,
+      text: `${c.direction} call by ${c.agent} — ${c.disposition}${c.technicalResult ? ` (${c.technicalResult})` : ''}`,
       k: 'Call',
     })),
     ...notes.map((n: any) => ({
       t: n.date,
-      text: `${n.author} added note: "${n.title}"`,
+      text: `${n.author} added note: "${n.title || n.body?.slice(0, 40)}"`,
       k: 'Note',
+    })),
+    ...(lead.assignmentHistory || []).map((h: any) => ({
+      t: h.at || lead.created,
+      text: `Reassigned from ${h.from} to ${h.to} by ${h.by || 'Admin'}`,
+      k: 'Assignment',
     })),
     {
       t: lead.created || todayIso,
@@ -421,6 +493,7 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
   ].sort((a, b) => String(b.t).localeCompare(String(a.t)));
 
   const stageIdx = STAGES.indexOf(lead.status);
+  const isDNC = lead.status === 'Do Not Call' || lead.dnc;
 
   return (
     <div>
@@ -433,12 +506,31 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
         All leads
       </button>
 
+      {isDNC && (
+        <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl mb-4 flex items-center gap-3 text-red-900 text-sm">
+          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <span className="text-red-700 font-bold text-xs">DNC</span>
+          </div>
+          <div>
+            <p className="font-semibold text-sm">Do Not Call (DNC) Active</p>
+            <p className="text-xs text-red-700">
+              This contact has opted out. Outbound calling and messaging workflows must remain suppressed.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6 fade-up">
         <Avatar name={lead.name} size={56} />
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-[#111827]" data-testid="lead-detail-name">
-            {lead.name}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight text-[#111827]" data-testid="lead-detail-name">
+              {lead.name}
+            </h1>
+            {isDNC && (
+              <span className="text-xs bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded">Do Not Call</span>
+            )}
+          </div>
           <p className="text-slate-500 text-sm">
             {lead.company} · {inr(lead.value)} potential
           </p>
@@ -448,41 +540,49 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
             <Pencil className="w-4 h-4" />
             Edit
           </Button>
-          <Button variant="secondary" onClick={() => setDel(true)} data-testid="lead-delete-btn">
-            <Trash2 className="w-4 h-4" />
-            Delete
-          </Button>
+          {!isCaller && (
+            <Button variant="secondary" onClick={() => setDel(true)} data-testid="lead-delete-btn">
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </Button>
+          )}
           <Button
-            disabled={lead.status === 'Won'}
+            disabled={['Won', 'Converted'].includes(lead.status)}
             onClick={() => convertLead(store, lead)}
             data-testid="lead-convert-btn"
           >
             <UserCheck className="w-4 h-4" />
-            {lead.status === 'Won' ? 'Converted' : 'Convert to customer'}
+            {['Won', 'Converted'].includes(lead.status) ? 'Converted' : 'Convert to customer'}
           </Button>
         </div>
       </div>
 
       {/* Stage Progression Bar */}
       <Card className="p-4 mb-4 overflow-x-auto">
-        <div className="flex gap-1 min-w-[640px]" data-testid="lead-stage-bar">
+        <div className="flex gap-1.5 min-w-[760px]" data-testid="lead-stage-bar">
           {STAGES.map((s, i) => {
-            const isPassed = i <= stageIdx && lead.status !== 'Lost';
-            const isLost = s === 'Lost' && lead.status === 'Lost';
+            const isPassed = i <= stageIdx && !['Not Interested', 'Do Not Call'].includes(lead.status);
+            const isCurrent = lead.status === s;
+            const isDncOrLost = ['Not Interested', 'Do Not Call'].includes(s) && lead.status === s;
             return (
               <button
                 key={s}
-                data-testid={`lead-stage-${s.toLowerCase()}`}
+                data-testid={`lead-stage-${s.toLowerCase().replace(/\s/g, '-')}`}
                 onClick={() => {
-                  store.update('leads', lead.id, { status: s });
+                  store.update('leads', lead.id, {
+                    status: s,
+                    dnc: s === 'Do Not Call' ? true : lead.dnc,
+                  });
                   toast.success(`Stage set to ${s}`);
                 }}
                 className={cn(
-                  'flex-1 h-9 text-xs font-medium rounded-md transition-colors',
+                  'flex-1 h-9 px-2 text-[11px] font-medium rounded-md transition-colors truncate',
+                  isCurrent ? 'ring-2 ring-brand font-semibold' : '',
                   isPassed ? 'text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200',
-                  isLost && 'bg-red-500 text-white'
+                  isDncOrLost && 'bg-red-500 text-white'
                 )}
-                style={isPassed ? { background: 'var(--brand)' } : undefined}
+                style={isPassed && !isDncOrLost ? { background: STAGE_COLOR[s] || 'var(--brand)' } : undefined}
+                title={s}
               >
                 {s}
               </button>
@@ -526,15 +626,29 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
           </div>
 
           <label className="block pt-3 border-t border-[#E5E7EB]">
-            <span className="text-xs font-medium text-slate-500">Assigned employee</span>
+            <span className="text-xs font-medium text-slate-500">
+              Assigned employee {isCaller && '(Admin only)'}
+            </span>
             <select
               data-testid="lead-assign-select"
-              className={cn(inputCls, 'mt-1')}
+              disabled={isCaller}
+              className={cn(inputCls, 'mt-1', isCaller && 'bg-slate-100 cursor-not-allowed opacity-80')}
               value={lead.owner || ''}
               onChange={(e) => {
-                store.update('leads', lead.id, { owner: e.target.value });
-                store.notify('Lead reassigned', `${lead.name} assigned to ${e.target.value}`, 'lead');
-                toast.success(`Assigned to ${e.target.value}`);
+                const oldOwner = lead.owner || 'Unassigned';
+                const newOwner = e.target.value;
+                const history = [
+                  ...(lead.assignmentHistory || []),
+                  {
+                    from: oldOwner,
+                    to: newOwner,
+                    at: new Date().toISOString(),
+                    by: state.session?.name || 'Admin',
+                  },
+                ];
+                store.update('leads', lead.id, { owner: newOwner, assignmentHistory: history });
+                store.notify('Lead reassigned', `${lead.name} assigned to ${newOwner}`, 'lead');
+                toast.success(`Assigned to ${newOwner}`);
               }}
             >
               <option value="">Unassigned</option>

@@ -32,10 +32,13 @@ import { Kanban } from './Leads';
 const todayIso = new Date().toISOString().slice(0, 10);
 const futureIso = new Date(Date.now() + 864e5 * 2).toISOString().slice(0, 10);
 
-const TDEF = { status: 'To Do', priority: 'Medium', due: futureIso };
+const TDEF = { status: 'Open', priority: 'Medium', due: futureIso };
 const TCOL: Record<string, string> = {
-  'To Do': '#94A3B8',
+  Open: '#94A3B8',
   'In Progress': '#F59E0B',
+  Completed: '#10B981',
+  Cancelled: '#EF4444',
+  'To Do': '#94A3B8',
   Review: '#8B5CF6',
   Done: '#10B981',
 };
@@ -119,7 +122,7 @@ function Planner() {
   const { state } = useStore();
   const evs = (state.events || []).filter((e: any) => e.date === todayIso);
   const tasks = (state.tasks || []).filter(
-    (t: any) => t.due === todayIso || (t.due < todayIso && t.status !== 'Done')
+    (t: any) => t.due === todayIso || (t.due < todayIso && !['Completed', 'Done', 'Cancelled'].includes(t.status))
   );
   const slots = Array.from({ length: 10 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
 
@@ -190,17 +193,22 @@ export function TasksView() {
   const [emp, setEmp] = useState('');
   const [edit, setEdit] = useState<any>(null);
 
-  const tasks = state.tasks || [];
+  const isCaller = state.session?.role === 'Caller';
+  const currentUser = state.session?.name;
+
+  const tasks = isCaller
+    ? (state.tasks || []).filter((t: any) => t.assignee === currentUser || !t.assignee)
+    : state.tasks || [];
   const items = tasks.filter((t: any) => !emp || t.assignee === emp);
-  const done = tasks.filter((t: any) => t.status === 'Done').length;
+  const done = tasks.filter((t: any) => ['Completed', 'Done'].includes(t.status)).length;
   const inProgress = tasks.filter((t: any) => t.status === 'In Progress').length;
-  const overdue = tasks.filter((t: any) => t.due < todayIso && t.status !== 'Done').length;
+  const overdue = tasks.filter((t: any) => t.due < todayIso && !['Completed', 'Done', 'Cancelled'].includes(t.status)).length;
 
   const byEmp = (state.employees || [])
     .map((e: any) => ({
       e,
       n: tasks.filter((t: any) => t.assignee === e.name).length,
-      d: tasks.filter((t: any) => t.assignee === e.name && t.status === 'Done').length,
+      d: tasks.filter((t: any) => t.assignee === e.name && ['Completed', 'Done'].includes(t.status)).length,
     }))
     .filter((x: any) => x.n > 0);
 

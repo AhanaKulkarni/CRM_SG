@@ -11,9 +11,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Phone, PhoneOff, PhoneCall, Clock, Mic, MicOff, Pause, Users, CheckCircle2 } from 'lucide-react';
+import { Phone, PhoneOff, PhoneCall, Clock, Mic, MicOff, Pause, Users, CheckCircle2, Play, Volume2 } from 'lucide-react';
 import { useStore } from '@/lib/store';
-import { FIELDS } from '@/lib/fields';
+import { FIELDS, TECHNICAL_RESULTS, SALES_DISPOSITIONS } from '@/lib/fields';
 import {
   Card,
   CardHead,
@@ -33,25 +33,33 @@ import {
 } from '@/components/kit';
 
 export const dur = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-const DISP = ['Interested', 'Callback', 'Not Interested', 'No Answer', 'Converted'];
 const todayIso = new Date().toISOString().slice(0, 10);
 const future2Days = new Date(Date.now() + 864e5 * 2).toISOString().slice(0, 10);
 
 function Dialer() {
   const store = useStore();
   const { state } = store;
-  const leads = state.leads || [];
+  const isCaller = state.session?.role === 'Caller';
+  const currentUser = state.session?.name;
+
+  // Callers can only dial their own assigned leads; Admins can dial all
+  const rawLeads = state.leads || [];
+  const leads = isCaller
+    ? rawLeads.filter((l: any) => l.owner === currentUser || !l.owner)
+    : rawLeads;
 
   const [sel, setSel] = useState<string>(leads[0]?.id || '');
   const [live, setLive] = useState(false);
   const [sec, setSec] = useState(0);
   const [mute, setMute] = useState(false);
   const [wrap, setWrap] = useState(false);
-  const [disp, setDisp] = useState('Interested');
+  const [techResult, setTechResult] = useState<string>('Answered/Connected');
+  const [salesDisp, setSalesDisp] = useState<string>('Interested');
   const [fu, setFu] = useState(future2Days);
   const [notes, setNotes] = useState('');
 
   const lead = leads.find((l: any) => l.id === sel) || leads[0];
+  const isDNC = lead?.dnc || lead?.status === 'Do Not Call';
 
   useEffect(() => {
     if (!sel && leads[0]?.id) {
@@ -71,34 +79,58 @@ function Dialer() {
       contact: lead.name,
       company: lead.company,
       phone: lead.phone,
-      agent: state.session?.name || 'Aisha Khan',
+      agent: currentUser || 'Agent',
       direction: 'Outbound',
-      disposition: disp,
+      technicalResult: techResult,
+      disposition: salesDisp,
       duration: Math.max(sec, 1),
       date: todayIso,
-      followUp: ['Interested', 'Callback'].includes(disp) ? fu : '',
+      followUp: ['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) ? fu : '',
+      recordingUrl: '',
       notes,
     });
 
-    if (['Interested', 'Callback'].includes(disp)) {
+    if (['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp)) {
       store.add('reminders', {
-        title: `Follow-up call with ${lead.name}`,
+        title: `Follow-up call with ${lead.name} (${lead.company})`,
         type: 'Follow-up',
         due: fu,
         time: '11:00',
-        owner: lead.owner || state.session?.name,
+        owner: lead.owner || currentUser,
         done: false,
         auto: true,
       });
     }
 
+    // Lead stage update per Rulebook Section 2.5
+    let newStatus = lead.status;
+    let newDnc = lead.dnc || false;
+    if (salesDisp === 'Do Not Call') {
+      newStatus = 'Do Not Call';
+      newDnc = true;
+    } else if (salesDisp === 'Converted') {
+      newStatus = 'Converted';
+    } else if (['Interested', 'Follow-up Scheduled'].includes(salesDisp)) {
+      newStatus = salesDisp;
+    } else if (salesDisp === 'Call Back Required') {
+      newStatus = 'Follow-up Scheduled';
+    } else if (salesDisp === 'Not Interested') {
+      newStatus = 'Not Interested';
+    } else if (['No Answer', 'Busy'].includes(techResult) && lead.status === 'New') {
+      newStatus = 'Attempted';
+    } else if (techResult === 'Answered/Connected' && ['New', 'Assigned', 'Attempted'].includes(lead.status)) {
+      newStatus = 'Contacted';
+    }
+
     store.update('leads', lead.id, {
-      status: disp === 'Converted' ? 'Won' : lead.status === 'New' ? 'Contacted' : lead.status,
+      status: newStatus,
+      dnc: newDnc,
+      lastCalled: todayIso,
     });
 
-    store.log(state.session?.name || 'You', 'logged a call with', lead.company, 'call');
+    store.log(currentUser || 'You', 'logged a call with', `${lead.company} (${salesDisp})`, 'call');
     toast.success('Call logged', {
-      description: `${disp}${['Interested', 'Callback'].includes(disp) ? ' · follow-up scheduled' : ''}`,
+      description: `${techResult} · ${salesDisp}${['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) ? ' · follow-up scheduled' : ''}`,
     });
 
     setWrap(false);
@@ -120,7 +152,15 @@ function Dialer() {
 
   return (
     <Card className="p-5" data-testid="dialer">
-      <h3 className="font-semibold text-[15px] mb-4 text-[#111827]">Click-to-call</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-[15px] text-[#111827]">Click-to-call</h3>
+        {isDNC && (
+          <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+            DNC Restricted
+          </span>
+        )}
+      </div>
+
       <select
         data-testid="dialer-contact-select"
         disabled={live}
@@ -128,9 +168,9 @@ function Dialer() {
         value={sel}
         onChange={(e) => setSel(e.target.value)}
       >
-        {leads.slice(0, 25).map((l: any) => (
+        {leads.slice(0, 30).map((l: any) => (
           <option key={l.id} value={l.id}>
-            {l.name} · {l.company}
+            {l.name} · {l.company} {l.dnc ? '(DNC)' : ''}
           </option>
         ))}
       </select>
@@ -139,17 +179,25 @@ function Dialer() {
         <Avatar name={lead.name} size={56} />
         <p className="mt-3 font-semibold text-lg">{lead.name}</p>
         <p className="text-xs text-slate-400">
-          {lead.company} · {lead.phone || 'No number'}
+          {lead.company} · {lead.phone || 'No phone number'}
         </p>
-        <p
-          className={cn(
-            'mt-3 text-2xl font-mono tabular-nums font-bold tracking-wider',
-            live ? 'text-emerald-400' : 'text-slate-500'
-          )}
-          data-testid="dialer-timer"
-        >
-          {live ? dur(sec) : 'Ready'}
-        </p>
+
+        {isDNC ? (
+          <div className="mt-4 p-2.5 bg-red-950/70 border border-red-800 rounded-lg text-xs text-red-300">
+            ⚠️ DO NOT CALL: This lead has opted out of outbound communications.
+          </div>
+        ) : (
+          <p
+            className={cn(
+              'mt-3 text-2xl font-mono tabular-nums font-bold tracking-wider',
+              live ? 'text-emerald-400' : 'text-slate-500'
+            )}
+            data-testid="dialer-timer"
+          >
+            {live ? dur(sec) : 'Ready'}
+          </p>
+        )}
+
         <div className="flex justify-center gap-3 mt-4">
           {live ? (
             <>
@@ -184,14 +232,21 @@ function Dialer() {
           ) : (
             <button
               type="button"
+              disabled={isDNC}
               data-testid="dialer-call-btn"
               onClick={() => {
+                if (isDNC) return;
                 setSec(0);
                 setLive(true);
-                toast(`Calling ${lead.name}…`, { description: 'Simulated call session' });
+                toast(`Calling ${lead.name}…`, { description: 'Outbound session initiated' });
               }}
-              className="w-14 h-14 rounded-full bg-[#10B981] flex items-center justify-center pulse-ring hover:bg-emerald-600 transition-colors shadow-lg"
-              title="Call"
+              className={cn(
+                'w-14 h-14 rounded-full flex items-center justify-center transition-colors shadow-lg',
+                isDNC
+                  ? 'bg-slate-700 cursor-not-allowed opacity-50'
+                  : 'bg-[#10B981] pulse-ring hover:bg-emerald-600'
+              )}
+              title={isDNC ? 'Do Not Call active' : 'Call'}
             >
               <Phone className="w-5 h-5 text-white" />
             </button>
@@ -202,50 +257,92 @@ function Dialer() {
       <Modal
         open={wrap}
         onClose={() => setWrap(false)}
-        title="Call disposition"
-        description={`Call with ${lead.name} · ${dur(sec)}`}
+        title="Call disposition & outcome"
+        description={`Call with ${lead.name} · ${dur(sec)} duration`}
         testid="disposition-modal"
       >
-        <div className="grid grid-cols-2 gap-2">
-          {DISP.map((d) => (
-            <button
-              key={d}
-              data-testid={`disp-${d.toLowerCase().replace(/\s/g, '-')}`}
-              onClick={() => setDisp(d)}
-              className={cn(
-                'h-10 rounded-lg border text-sm font-medium transition-colors',
-                disp === d ? 'border-brand bg-brand-soft text-[#111827]' : 'border-[#E5E7EB] hover:bg-slate-50'
-              )}
-            >
-              {d}
-            </button>
-          ))}
+        <div className="space-y-4">
+          {/* Section 1: Technical Call Result */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              1. Technical Call Result (Provider)
+            </label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {TECHNICAL_RESULTS.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setTechResult(r)}
+                  className={cn(
+                    'h-9 px-2 rounded-lg border text-xs font-medium transition-colors truncate',
+                    techResult === r
+                      ? 'border-brand bg-brand-soft text-[#111827] ring-1 ring-brand font-semibold'
+                      : 'border-[#E5E7EB] hover:bg-slate-50 text-slate-700'
+                  )}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 2: Sales Disposition */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              2. Sales Disposition (Caller Outcome)
+            </label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {SALES_DISPOSITIONS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  data-testid={`disp-${d.toLowerCase().replace(/[\s/]/g, '-')}`}
+                  onClick={() => setSalesDisp(d)}
+                  className={cn(
+                    'h-9 px-2 rounded-lg border text-xs font-medium transition-colors truncate',
+                    salesDisp === d
+                      ? 'border-brand bg-brand-soft text-[#111827] ring-1 ring-brand font-semibold'
+                      : 'border-[#E5E7EB] hover:bg-slate-50 text-slate-700',
+                    d === 'Do Not Call' && salesDisp === d && 'border-red-500 bg-red-50 text-red-900 ring-red-500'
+                  )}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) && (
+            <label className="block pt-1">
+              <span className="text-xs font-medium text-slate-700">Schedule follow-up date</span>
+              <input
+                type="date"
+                className={`${inputCls} mt-1`}
+                value={fu}
+                onChange={(e) => setFu(e.target.value)}
+                data-testid="followup-date"
+              />
+            </label>
+          )}
+
+          {salesDisp === 'Do Not Call' && (
+            <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+              Note: Marking as Do Not Call will suppress all future outbound calls and mark this lead as DNC in the database.
+            </div>
+          )}
+
+          <textarea
+            className={`${inputCls} h-20 py-2`}
+            placeholder="Call notes & key conversation takeaways…"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            data-testid="call-notes"
+          />
+
+          <Button onClick={save} data-testid="save-call-btn" className="w-full">
+            Save call log
+          </Button>
         </div>
-
-        {['Interested', 'Callback'].includes(disp) && (
-          <label className="block pt-2">
-            <span className="text-xs font-medium text-slate-600">Schedule follow-up date</span>
-            <input
-              type="date"
-              className={`${inputCls} mt-1`}
-              value={fu}
-              onChange={(e) => setFu(e.target.value)}
-              data-testid="followup-date"
-            />
-          </label>
-        )}
-
-        <textarea
-          className={`${inputCls} h-20 py-2 mt-2`}
-          placeholder="Call notes & key takeaways…"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          data-testid="call-notes"
-        />
-
-        <Button onClick={save} data-testid="save-call-btn" className="w-full mt-2">
-          Save call log
-        </Button>
       </Modal>
     </Card>
   );
@@ -254,14 +351,32 @@ function Dialer() {
 export function TelecallingView() {
   const { state } = useStore();
   const [tab, setTab] = useState('Call Logs');
+  const [fuFilter, setFuFilter] = useState<'All' | 'Overdue' | 'Today' | 'Upcoming'>('All');
 
-  const calls = state.calls || [];
+  const isCaller = state.session?.role === 'Caller';
+  const currentUser = state.session?.name;
+
+  // Caller rule: view only own call history
+  const allCalls = state.calls || [];
+  const calls = isCaller
+    ? allCalls.filter((c: any) => c.agent === currentUser)
+    : allCalls;
+
+  const rawLeads = state.leads || [];
+  const leads = isCaller
+    ? rawLeads.filter((l: any) => l.owner === currentUser || !l.owner)
+    : rawLeads;
+
   const callsToday = calls.filter((c: any) => c.date === todayIso).length;
   const avgDurationSec =
     calls.length > 0 ? Math.round(calls.reduce((a: number, c: any) => a + Number(c.duration || 0), 0) / calls.length) : 0;
-  const connectedCalls = calls.filter((c: any) => c.disposition !== 'No Answer').length;
+  const connectedCalls = calls.filter((c: any) =>
+    c.technicalResult === 'Answered/Connected' || (!c.technicalResult && c.disposition !== 'No Answer')
+  ).length;
   const connectRate = calls.length > 0 ? `${Math.round((connectedCalls / calls.length) * 100)}%` : '0%';
-  const positiveOutcomes = calls.filter((c: any) => ['Converted', 'Interested'].includes(c.disposition)).length;
+  const positiveOutcomes = calls.filter((c: any) =>
+    ['Converted', 'Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(c.disposition)
+  ).length;
 
   const agents = [...new Set(calls.map((c: any) => c.agent).filter(Boolean))].map((a: any) => {
     const cs = calls.filter((c: any) => c.agent === a);
@@ -272,6 +387,15 @@ export function TelecallingView() {
       talk: Math.round(cs.reduce((x: number, c: any) => x + Number(c.duration || 0), 0) / 60),
       conv: cs.filter((c: any) => ['Converted', 'Interested'].includes(c.disposition)).length,
     };
+  });
+
+  // Filtered follow-up calls
+  const allFollowUps = calls.filter((c: any) => Boolean(c.followUp));
+  const followUps = allFollowUps.filter((c: any) => {
+    if (fuFilter === 'Overdue') return c.followUp < todayIso;
+    if (fuFilter === 'Today') return c.followUp === todayIso;
+    if (fuFilter === 'Upcoming') return c.followUp > todayIso;
+    return true;
   });
 
   return (
@@ -347,12 +471,20 @@ export function TelecallingView() {
           testid="calls"
           collection="calls"
           entity="Call log"
+          rows={calls}
           addLabel="Log call"
           fields={FIELDS.calls(state)}
-          defaults={{ direction: 'Outbound', date: todayIso, duration: 60, disposition: 'Interested' }}
-          searchKeys={['contact', 'company', 'agent', 'phone']}
+          defaults={{
+            direction: 'Outbound',
+            date: todayIso,
+            duration: 60,
+            technicalResult: 'Answered/Connected',
+            disposition: 'Interested',
+          }}
+          searchKeys={['contact', 'company', 'agent', 'phone', 'notes']}
           filters={[
-            { key: 'disposition', label: 'dispositions', options: DISP },
+            { key: 'technicalResult', label: 'technical results', options: TECHNICAL_RESULTS },
+            { key: 'disposition', label: 'dispositions', options: SALES_DISPOSITIONS },
             { key: 'agent', label: 'agents', options: [...new Set(calls.map((c: any) => c.agent).filter(Boolean))] },
           ]}
           columns={[
@@ -361,24 +493,72 @@ export function TelecallingView() {
               label: 'Contact',
               render: (c: any) => (
                 <div>
-                  <p className="font-medium text-[#111827]">{c.contact}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium text-[#111827]">{c.contact}</p>
+                    {c.disposition === 'Do Not Call' && (
+                      <span className="text-[10px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-bold">DNC</span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">
                     {c.company} · {c.phone}
                   </p>
                 </div>
               ),
             },
-            { key: 'direction', label: 'Direction' },
             { key: 'agent', label: 'Agent' },
             {
+              key: 'technicalResult',
+              label: 'Technical Result',
+              render: (c: any) => (
+                <span
+                  className={cn(
+                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                    c.technicalResult === 'Answered/Connected'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : ['Busy', 'No Answer'].includes(c.technicalResult)
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-slate-100 text-slate-600'
+                  )}
+                >
+                  {c.technicalResult || 'Connected'}
+                </span>
+              ),
+            },
+            {
               key: 'disposition',
-              label: 'Disposition',
-              render: (c: any) => <Badge>{c.disposition}</Badge>,
+              label: 'Sales Disposition',
+              render: (c: any) => (
+                <span
+                  className={cn(
+                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold',
+                    c.disposition === 'Converted' && 'bg-emerald-100 text-emerald-800',
+                    c.disposition === 'Interested' && 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+                    ['Call Back Required', 'Follow-up Scheduled'].includes(c.disposition) &&
+                      'bg-purple-50 text-purple-700 border border-purple-200',
+                    c.disposition === 'Do Not Call' && 'bg-red-100 text-red-800 font-bold',
+                    c.disposition === 'Not Interested' && 'bg-slate-100 text-slate-600'
+                  )}
+                >
+                  {c.disposition}
+                </span>
+              ),
             },
             {
               key: 'duration',
               label: 'Duration',
               render: (c: any) => dur(c.duration),
+            },
+            {
+              key: 'recording',
+              label: 'Recording',
+              render: (c: any) =>
+                c.recordingUrl ? (
+                  <audio src={c.recordingUrl} controls className="h-7 w-32" />
+                ) : (
+                  <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded" title="Audio processing or recording not captured">
+                    Unavailable
+                  </span>
+                ),
             },
             { key: 'date', label: 'Date', render: (c: any) => fmtDate(c.date) },
             {
@@ -391,25 +571,63 @@ export function TelecallingView() {
       )}
 
       {tab === 'Follow-ups' && (
-        <CrudTable
-          testid="followups"
-          rows={calls.filter((c: any) => Boolean(c.followUp))}
-          searchKeys={['contact', 'agent']}
-          columns={[
-            { key: 'contact', label: 'Contact' },
-            { key: 'company', label: 'Company' },
-            { key: 'agent', label: 'Agent' },
-            { key: 'followUp', label: 'Follow-up date', render: (c: any) => fmtDate(c.followUp) },
-            { key: 'notes', label: 'Context', render: (c: any) => c.notes || '—' },
-          ]}
-        />
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {(['All', 'Overdue', 'Today', 'Upcoming'] as const).map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setFuFilter(filter)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  fuFilter === filter
+                    ? 'bg-[#111827] text-white shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                )}
+              >
+                {filter} {filter === 'Overdue' && `(${allFollowUps.filter((c: any) => c.followUp < todayIso).length})`}
+              </button>
+            ))}
+          </div>
+
+          <CrudTable
+            testid="followups"
+            rows={followUps}
+            searchKeys={['contact', 'company', 'agent', 'notes']}
+            columns={[
+              { key: 'contact', label: 'Contact' },
+              { key: 'company', label: 'Company' },
+              { key: 'agent', label: 'Agent' },
+              {
+                key: 'followUp',
+                label: 'Follow-up date',
+                render: (c: any) => {
+                  const isOver = c.followUp < todayIso;
+                  const isTod = c.followUp === todayIso;
+                  return (
+                    <span
+                      className={cn(
+                        'font-medium text-xs',
+                        isOver && 'text-red-600 font-semibold',
+                        isTod && 'text-amber-600 font-semibold'
+                      )}
+                    >
+                      {fmtDate(c.followUp)} {isOver && '(Overdue)'} {isTod && '(Due today)'}
+                    </span>
+                  );
+                },
+              },
+              { key: 'notes', label: 'Context & Notes', render: (c: any) => c.notes || '—' },
+            ]}
+          />
+        </div>
       )}
 
       {tab === 'Contacts' && (
         <CrudTable
           testid="tele-contacts"
-          rows={state.leads || []}
-          searchKeys={['name', 'company', 'phone']}
+          rows={leads}
+          searchKeys={['name', 'company', 'phone', 'owner']}
           columns={[
             {
               key: 'name',
@@ -417,13 +635,16 @@ export function TelecallingView() {
               render: (l: any) => (
                 <span className="flex items-center gap-2">
                   <Avatar name={l.name} size={24} />
-                  {l.name}
+                  <span className="font-medium text-[#111827]">{l.name}</span>
+                  {(l.dnc || l.status === 'Do Not Call') && (
+                    <span className="text-[10px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-bold">DNC</span>
+                  )}
                 </span>
               ),
             },
             { key: 'company', label: 'Company' },
             { key: 'phone', label: 'Phone', render: (l: any) => l.phone || '—' },
-            { key: 'email', label: 'Email', render: (l: any) => l.email || '—' },
+            { key: 'owner', label: 'Assigned to' },
             { key: 'status', label: 'Stage', render: (l: any) => <Badge>{l.status}</Badge> },
           ]}
         />

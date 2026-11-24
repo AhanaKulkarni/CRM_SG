@@ -40,10 +40,14 @@ const dayOffset = (n: number) => {
 
 export default function ReportsView() {
   const { state } = useStore();
+  const isCaller = state.session?.role === 'Caller';
+  const currentUser = state.session?.name;
+
   const [tab, setTab] = useState('Revenue');
   const [preset, setPreset] = useState('6M');
   const [from, setFrom] = useState(dayOffset(-180));
   const [to, setTo] = useState(dayOffset(0));
+  const [caller, setCaller] = useState(isCaller ? currentUser || '' : '');
 
   const setRange = (p: string) => {
     setPreset(p);
@@ -51,6 +55,17 @@ export default function ReportsView() {
     setFrom(dayOffset(-(m[p] || 180)));
     setTo(dayOffset(0));
   };
+
+  const callerOptions = useMemo(() => {
+    const list = new Set<string>();
+    (state.employees || []).forEach((e: any) => {
+      if (e.name) list.add(e.name);
+    });
+    (state.calls || []).forEach((c: any) => {
+      if (c.agent) list.add(c.agent);
+    });
+    return Array.from(list);
+  }, [state.employees, state.calls]);
 
   // Generate dynamic monthly aggregations from state if records exist, or calculated intervals
   const months = useMemo(() => {
@@ -65,6 +80,9 @@ export default function ReportsView() {
       const key = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
       const yearMonth = d.toISOString().slice(0, 7);
 
+      // Filter by caller if active
+      const filterByCaller = (itemCaller: string) => !caller || itemCaller === caller;
+
       // Invoices in this month
       const monthInvoices = (state.invoices || []).filter((inv: any) =>
         (inv.date || inv.issueDate || '').startsWith(yearMonth)
@@ -78,14 +96,24 @@ export default function ReportsView() {
       );
 
       // Leads created in this month
-      const monthLeads = (state.leads || []).filter((l: any) =>
-        (l.created || l.createdAt || '').startsWith(yearMonth)
+      const monthLeads = (state.leads || []).filter(
+        (l: any) =>
+          (l.created || l.createdAt || '').startsWith(yearMonth) &&
+          filterByCaller(l.owner)
       );
-      const wonLeads = monthLeads.filter((l: any) => l.status === 'Won');
+      const wonLeads = monthLeads.filter((l: any) => ['Won', 'Converted'].includes(l.status));
+
+      // Calls in this month
+      const monthCalls = (state.calls || []).filter(
+        (c: any) => (c.date || '').startsWith(yearMonth) && filterByCaller(c.agent)
+      );
+      const connectedCalls = monthCalls.filter((c: any) =>
+        c.technicalResult === 'Answered/Connected' || (!c.technicalResult && c.disposition !== 'No Answer')
+      );
 
       // Customers created in this month
-      const monthCustomers = (state.customers || []).filter((c: any) =>
-        (c.created || c.createdAt || '').startsWith(yearMonth)
+      const monthCustomers = (state.customers || []).filter(
+        (c: any) => (c.created || c.createdAt || '').startsWith(yearMonth) && filterByCaller(c.owner)
       );
 
       return {
@@ -95,6 +123,8 @@ export default function ReportsView() {
         actualExpenses: Math.round((paidRev || allInvRev) * 0.45),
         actualLeads: monthLeads.length,
         actualWon: wonLeads.length,
+        actualCalls: monthCalls.length,
+        actualConnected: connectedCalls.length,
         actualCustomers: monthCustomers.length,
       };
     });
@@ -102,31 +132,68 @@ export default function ReportsView() {
     const hasAnyInvoices = (state.invoices || []).length > 0;
     const hasAnyLeads = (state.leads || []).length > 0;
     const hasAnyCustomers = (state.customers || []).length > 0;
+    const hasAnyCalls = (state.calls || []).length > 0;
 
-    return monthBuckets.map((b, i) => {
-      if (hasAnyInvoices || hasAnyLeads || hasAnyCustomers) {
+    return monthBuckets.map((b) => {
+      if (hasAnyInvoices || hasAnyLeads || hasAnyCustomers || hasAnyCalls) {
         return {
           period: b.period,
           Revenue: b.actualRev,
           Expenses: b.actualExpenses,
           Leads: b.actualLeads,
           Converted: b.actualWon,
+          Calls: b.actualCalls,
+          Connected: b.actualConnected,
           NewCustomers: b.actualCustomers,
           CAC: b.actualCustomers > 0 ? Math.round(b.actualExpenses / b.actualCustomers) : 0,
         };
       }
-      // When completely zero DB records, show 0 instead of fake numbers
       return {
         period: b.period,
         Revenue: 0,
         Expenses: 0,
         Leads: 0,
         Converted: 0,
+        Calls: 0,
+        Connected: 0,
         NewCustomers: 0,
         CAC: 0,
       };
     });
-  }, [from, to, state.invoices, state.leads, state.customers]);
+  }, [state, from, to, caller]);
+
+  // Caller & Telecalling metrics
+  const telecallingRows = useMemo(() => {
+    const list = caller ? [caller] : callerOptions;
+    return list.map((agent) => {
+      const agentCalls = (state.calls || []).filter((c: any) => c.agent === agent);
+      const connected = agentCalls.filter((c: any) =>
+        c.technicalResult === 'Answered/Connected' || (!c.technicalResult && c.disposition !== 'No Answer')
+      );
+      const interested = agentCalls.filter((c: any) => c.disposition === 'Interested').length;
+      const callback = agentCalls.filter((c: any) =>
+        ['Call Back Required', 'Callback', 'Follow-up Scheduled'].includes(c.disposition)
+      ).length;
+      const converted = agentCalls.filter((c: any) => c.disposition === 'Converted').length;
+      const dnc = agentCalls.filter((c: any) => c.disposition === 'Do Not Call').length;
+      const totalSec = agentCalls.reduce((s: number, c: any) => s + (Number(c.duration) || 0), 0);
+
+      const agentLeads = (state.leads || []).filter((l: any) => l.owner === agent);
+
+      return {
+        name: agent,
+        CallsAttempted: agentCalls.length,
+        CallsConnected: connected.length,
+        ConnectRate: agentCalls.length > 0 ? `${Math.round((connected.length / agentCalls.length) * 100)}%` : '0%',
+        TalkTimeMin: Math.round(totalSec / 60),
+        Interested: interested,
+        FollowUps: callback,
+        Converted: converted,
+        DNC: dnc,
+        AssignedLeads: agentLeads.length,
+      };
+    });
+  }, [caller, callerOptions, state.calls, state.leads]);
 
   const prod = useMemo(() => {
     return (state.employees || []).map((e: any) => {
@@ -156,6 +223,7 @@ export default function ReportsView() {
   }, [state.campaigns]);
 
   const sets: Record<string, any[]> = {
+    'Telecalling & Dispositions': telecallingRows,
     Revenue: months.map(({ period, Revenue, Expenses }) => ({
       period,
       Revenue,
@@ -189,14 +257,20 @@ export default function ReportsView() {
   const totalNewCust = months.reduce((a, m) => a + m.NewCustomers, 0);
   const avgCAC = totalNewCust > 0 ? Math.round(totalExp / totalNewCust) : 0;
 
+  // Telecalling totals
+  const totalCallsAttempted = telecallingRows.reduce((a, r) => a + r.CallsAttempted, 0);
+  const totalCallsConnected = telecallingRows.reduce((a, r) => a + r.CallsConnected, 0);
+  const totalTalkTime = telecallingRows.reduce((a, r) => a + r.TalkTimeMin, 0);
+  const totalPositive = telecallingRows.reduce((a, r) => a + r.Interested + r.Converted + r.FollowUps, 0);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Reports & Analytics"
-        subtitle="Deep-dive into revenue, conversion, productivity and customer acquisition."
+        subtitle="Deep-dive into revenue, telecalling outcomes, lead conversion and team performance."
         actions={
           <Button
-            onClick={() => downloadCSV(tab.toLowerCase().replace(/\s/g, '-'), rows)}
+            onClick={() => downloadCSV(tab.toLowerCase().replace(/[\s&]/g, '-'), rows)}
             data-testid="report-export-btn"
           >
             <Download className="w-4 h-4" />
@@ -238,11 +312,40 @@ export default function ReportsView() {
             }}
           />
         </label>
+        <label className="text-xs text-slate-500">
+          Filter by Caller {isCaller && '(My View)'}
+          <select
+            data-testid="report-caller-filter"
+            disabled={isCaller}
+            className={`${inputCls} mt-1`}
+            value={caller}
+            onChange={(e) => setCaller(e.target.value)}
+          >
+            {!isCaller && <option value="">All Callers</option>}
+            {callerOptions.map((c: any) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
       </Card>
 
       <Tabs testid="report-tabs" tabs={Object.keys(sets)} value={tab} onChange={setTab} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {tab === 'Telecalling & Dispositions' && (
+          <>
+            <Stat label="Calls Attempted" value={totalCallsAttempted} icon={BarChart3} />
+            <Stat
+              label="Calls Connected"
+              value={totalCallsConnected}
+              hint={totalCallsAttempted > 0 ? `${Math.round((totalCallsConnected / totalCallsAttempted) * 100)}% connect rate` : '0%'}
+            />
+            <Stat label="Total Talk Time" value={`${totalTalkTime} min`} />
+            <Stat label="Positive Outcomes" value={totalPositive} hint="interested + callback + won" />
+          </>
+        )}
         {tab === 'Revenue' && (
           <>
             <Stat label="Total Revenue" value={inr(totalRev)} icon={TrendingUp} />
@@ -307,10 +410,22 @@ export default function ReportsView() {
       </div>
 
       <Card data-testid="report-chart">
-        <CardHead title={tab} sub={`${from} → ${to}`} />
+        <CardHead title={tab} sub={`${from} → ${to}${caller ? ` · Filtered by: ${caller}` : ''}`} />
         <div className="h-80 px-2 pb-4">
           <ResponsiveContainer width="100%" height="100%">
-            {tab === 'Revenue' ? (
+            {tab === 'Telecalling & Dispositions' ? (
+              <BarChart data={rows}>
+                <CartesianGrid stroke={CHART.grid} vertical={false} />
+                <XAxis dataKey="name" {...axis} />
+                <YAxis {...axis} />
+                <Tooltip {...CHART.tooltip} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="CallsAttempted" fill="#94A3B8" name="Calls Attempted" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="CallsConnected" fill="var(--brand)" name="Connected" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Interested" fill="var(--brand2)" name="Interested" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Converted" fill="#10B981" name="Converted" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            ) : tab === 'Revenue' ? (
               <AreaChart data={rows}>
                 <CartesianGrid stroke={CHART.grid} vertical={false} />
                 <XAxis dataKey="period" {...axis} />

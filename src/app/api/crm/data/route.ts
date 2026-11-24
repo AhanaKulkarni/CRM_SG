@@ -39,21 +39,37 @@ export async function GET() {
     handoff: true,
   };
 
+  const isCaller = user.role === 'Caller';
+  const callerName = user.name;
+
+  // Data scoping per Rulebook Section 3
+  const scopedLeads = isCaller
+    ? (all.leads || []).filter((l: any) => l.owner === callerName || !l.owner)
+    : all.leads || [];
+
+  const scopedCalls = isCaller
+    ? (all.callLogs || []).filter((c: any) => c.agent === callerName)
+    : all.callLogs || [];
+
+  const scopedTasks = isCaller
+    ? (all.tasks || []).filter((t: any) => t.assignee === callerName || !t.assignee)
+    : all.tasks || [];
+
   return NextResponse.json({
     session: user,
     brand,
     bot,
     orgs: all.organisations || [],
     employees: all.employees || [],
-    leads: all.leads || [],
+    leads: scopedLeads,
     customers: all.customers || [],
-    tasks: all.tasks || [],
+    tasks: scopedTasks,
     todos: all.todos || [],
     events: all.calendarEvents || [],
     reminders: all.reminders || [],
     notifications: all.notifications || [],
     campaigns: all.marketingCampaigns || [],
-    calls: all.callLogs || [],
+    calls: scopedCalls,
     notes: all.notes || [],
     invoices: all.invoices || [],
     channels: all.chatChannels || [],
