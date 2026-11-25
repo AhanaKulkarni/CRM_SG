@@ -66,26 +66,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] bg-white">
+    <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] bg-[#EEF1F6] text-[#1C2433]">
       {/* Left branding pane */}
-      <div className="hidden lg:flex flex-col justify-between p-12 bg-[#111827] relative overflow-hidden text-white">
+      <div className="hidden lg:flex flex-col justify-between p-12 bg-[#171C2C] relative overflow-hidden text-white grain">
         <BrandMark brand={b} light size={36} />
         <div className="max-w-lg fade-up">
           <p
             className="text-xs font-semibold tracking-[0.2em] uppercase mb-4"
-            style={{ color: b?.secondary || '#8B5CF6' }}
+            style={{ color: b?.secondary || '#8B83F6' }}
           >
-            Pure Business Management System
+            Enterprise Business Management
           </p>
           <h1
             className="text-4xl xl:text-5xl font-semibold text-white leading-[1.15] tracking-tight"
             data-testid="login-headline"
           >
-            {b?.loginHeadline || 'Your complete revenue & operations platform.'}
+            {b?.loginHeadline || 'Accelerate your entire revenue engine.'}
           </h1>
           <p className="mt-5 text-slate-400 text-base leading-relaxed">
             {b?.loginSub ||
-              'Capture leads, manage customers, schedule meetings, issue GST invoices, and run automated telecalling — with zero pre-populated demo data.'}
+              'Capture leads, manage customers, schedule meetings, and run Plivo-powered browser telecalling — all in one command center.'}
           </p>
           <div className="mt-8 pt-8 border-t border-white/10 flex items-center gap-6 text-sm text-slate-300">
             <div>
@@ -94,8 +94,8 @@ export default function LoginPage() {
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div>
-              <p className="font-semibold text-white text-base">Production Ready</p>
-              <p className="text-xs text-slate-400">PostgreSQL / Supabase support</p>
+              <p className="font-semibold text-white text-base">India Telephony</p>
+              <p className="text-xs text-slate-400">Plivo Browser SDK ready</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div>
@@ -108,14 +108,14 @@ export default function LoginPage() {
       </div>
 
       {/* Right form pane */}
-      <div className="flex items-center justify-center p-6 sm:p-12 bg-white">
-        <div className="w-full max-w-sm fade-up">
+      <div className="flex items-center justify-center p-5 sm:p-10 bg-[#EEF1F6]">
+        <div className="w-full max-w-md neu-card rounded-3xl p-7 sm:p-9 fade-up">
           <div className="lg:hidden mb-6">
             <BrandMark brand={b} size={34} />
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
+          <div className="flex p-1 neu-inset rounded-xl mb-6">
             <button
               type="button"
               onClick={() => {
@@ -123,7 +123,7 @@ export default function LoginPage() {
                 setErr('');
               }}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                mode === 'signin' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                mode === 'signin' ? 'bg-white text-[#1C2433] shadow-sm' : 'text-[#778196] hover:text-[#1C2433]'
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
@@ -136,7 +136,7 @@ export default function LoginPage() {
                 setErr('');
               }}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                mode === 'signup' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                mode === 'signup' ? 'bg-white text-[#1C2433] shadow-sm' : 'text-[#778196] hover:text-[#1C2433]'
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -144,10 +144,10 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <h2 className="text-2xl font-semibold tracking-tight text-[#111827]">
+          <h2 className="text-2xl font-semibold tracking-tight text-[#1C2433]">
             {mode === 'signin' ? 'Welcome to AetherX' : 'Create your workspace'}
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-[#778196] mt-1">
             {mode === 'signin'
               ? 'Enter your work email and password to continue.'
               : 'Start fresh with a clean, unpopulated database.'}
@@ -230,16 +230,16 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick demo accounts */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center space-y-2">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          {/* Quick sign-in accounts */}
+          <div className="mt-6 pt-5 border-t border-[#E1E5ED] text-center space-y-2.5">
+            <p className="text-[11px] font-semibold text-[#778196] uppercase tracking-wider">
               Quick Sign-in (Password: admin@aetherx)
             </p>
-            <div className="flex flex-wrap justify-center gap-1.5">
+            <div className="flex flex-wrap justify-center gap-2">
               <button
                 type="button"
                 onClick={() => submit(undefined, 'admin@aetherx.app', 'admin@aetherx', '/app/overview')}
-                className="px-3 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                className="px-3.5 py-1.5 text-xs font-medium rounded-xl neu-btn text-[#1C2433]"
                 title="Sign in as Administrator"
               >
                 Admin
@@ -247,7 +247,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => submit(undefined, 'caller1@aetherx.app', 'admin@aetherx', '/app/overview')}
-                className="px-3 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                className="px-3.5 py-1.5 text-xs font-medium rounded-xl neu-btn text-[#1C2433]"
                 title="Sign in as Caller 1"
               >
                 Caller 1
@@ -255,7 +255,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => submit(undefined, 'superadmin@aetherx.app', 'admin@aetherx', '/admin')}
-                className="px-3 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-brand-soft hover:border-brand text-slate-700 transition-colors"
+                className="px-3.5 py-1.5 text-xs font-medium rounded-xl neu-btn text-[#1C2433]"
                 title="Sign in as Super Admin"
               >
                 Super Admin

@@ -28,7 +28,7 @@ import {
 } from '@/components/kit';
 
 const SEG = ['Enterprise', 'SMB', 'Startup'];
-const SEG_C = ['#8B5CF6', '#0EA5E9', '#6366F1'];
+const SEG_C = ['#8B83F6', '#0EA5E9', '#6965ED'];
 const todayIso = new Date().toISOString().slice(0, 10);
 
 export function CustomersView() {
@@ -102,7 +102,7 @@ export function CustomersView() {
                       style={{ background: SEG_C[i % SEG_C.length] }}
                     />
                     <span className="text-slate-600 truncate">{s.name}</span>
-                    <span className="font-semibold text-[#111827] ml-auto">{s.value}</span>
+                    <span className="font-semibold text-[#1C2433] ml-auto">{s.value}</span>
                   </div>
                 ))}
               </div>
@@ -134,8 +134,8 @@ export function CustomersView() {
                 <div className="flex items-center gap-3">
                   <Avatar name={c.company} size={30} />
                   <div>
-                    <p className="font-medium text-[#111827]">{c.company}</p>
-                    <p className="text-xs text-slate-500">{c.name}</p>
+                    <p className="font-medium text-[#1C2433]">{c.company}</p>
+                    <p className="text-xs text-[#778196]">{c.name}</p>
                   </div>
                 </div>
               ),
@@ -146,7 +146,7 @@ export function CustomersView() {
               render: (c: any) => (
                 <div>
                   <p className="text-slate-700">{c.email || '—'}</p>
-                  <p className="text-xs text-slate-500">{c.phone || '—'}</p>
+                  <p className="text-xs text-[#778196]">{c.phone || '—'}</p>
                 </div>
               ),
             },
@@ -192,8 +192,8 @@ export function CustomersView() {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Avatar name={c.company} size={36} />
                   <div className="min-w-0">
-                    <p className="font-semibold text-sm truncate text-[#111827]">{c.company}</p>
-                    <p className="text-xs text-slate-500 truncate">{c.name}</p>
+                    <p className="font-semibold text-sm truncate text-[#1C2433]">{c.company}</p>
+                    <p className="text-xs text-[#778196] truncate">{c.name}</p>
                   </div>
                 </div>
                 <Badge>{c.status}</Badge>
@@ -201,7 +201,7 @@ export function CustomersView() {
               <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-100 text-xs">
                 <div>
                   <span className="text-slate-400">LTV: </span>
-                  <span className="font-semibold text-[#111827]">{inr(c.ltv)}</span>
+                  <span className="font-semibold text-[#1C2433]">{inr(c.ltv)}</span>
                 </div>
                 <Badge tone="violet">{c.segment}</Badge>
               </div>
@@ -301,7 +301,7 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
     <div>
       <button
         onClick={() => router.push('/app/customers')}
-        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#778196] hover:text-slate-800 mb-4 transition-colors"
         data-testid="customer-back-btn"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -311,10 +311,10 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6 fade-up">
         <Avatar name={c.company} size={56} />
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-[#111827]" data-testid="customer-detail-name">
+          <h1 className="text-2xl font-semibold tracking-tight text-[#1C2433]" data-testid="customer-detail-name">
             {c.company}
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[#778196]">
             {c.name} · Customer since {fmtDate(c.since)}
           </p>
         </div>
@@ -341,7 +341,7 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
 
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="p-5 space-y-3 h-fit">
-          <h3 className="font-semibold text-[#111827]">Contact information</h3>
+          <h3 className="font-semibold text-[#1C2433]">Contact information</h3>
           {[
             [Mail, c.email || '—'],
             [Phone, c.phone || '—'],
@@ -353,11 +353,11 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
             </div>
           ))}
 
-          <div className="pt-3 border-t border-[#E5E7EB] text-sm">
-            <p className="text-xs text-slate-500">Account owner</p>
+          <div className="pt-3 border-t border-[#E1E5ED] text-sm">
+            <p className="text-xs text-[#778196]">Account owner</p>
             <div className="flex items-center gap-2 mt-1">
               <Avatar name={c.owner || '?'} size={24} />
-              <span className="font-medium text-[#111827]">{c.owner || 'Unassigned'}</span>
+              <span className="font-medium text-[#1C2433]">{c.owner || 'Unassigned'}</span>
             </div>
           </div>
         </Card>
@@ -396,7 +396,7 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
                 </Button>
               </form>
 
-              <ol className="relative border-l border-[#E5E7EB] ml-2 space-y-5" data-testid="customer-timeline">
+              <ol className="relative border-l border-[#E1E5ED] ml-2 space-y-5" data-testid="customer-timeline">
                 {timeline.map((t: any, i: number) => (
                   <li key={i} className="ml-5">
                     <span className="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-brand mt-1.5" />
@@ -421,11 +421,11 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
                     className="flex items-center justify-between p-3 rounded-lg border border-slate-100"
                   >
                     <div>
-                      <p className="font-medium text-sm text-[#111827]">{iv.number}</p>
-                      <p className="text-xs text-slate-500">Issued {fmtDate(iv.issue)}</p>
+                      <p className="font-medium text-sm text-[#1C2433]">{iv.number}</p>
+                      <p className="text-xs text-[#778196]">Issued {fmtDate(iv.issue)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-sm tabular-nums text-[#111827]">{inr(invTotal(iv))}</p>
+                      <p className="font-semibold text-sm tabular-nums text-[#1C2433]">{inr(invTotal(iv))}</p>
                       <Badge>{iv.status}</Badge>
                     </div>
                   </div>
@@ -445,8 +445,8 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
                     className="flex items-center justify-between p-3 rounded-lg border border-slate-100"
                   >
                     <div>
-                      <p className="font-medium text-sm text-[#111827]">{tk.subject}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-medium text-sm text-[#1C2433]">{tk.subject}</p>
+                      <p className="text-xs text-[#778196]">
                         {tk.number} · {tk.category}
                       </p>
                     </div>

@@ -69,8 +69,8 @@ export default function AdminView() {
       users: 42,
       status: 'Active',
       created: '2026-01-15',
-      primary: '#6366F1',
-      secondary: '#8B5CF6',
+      primary: '#6965ED',
+      secondary: '#8B83F6',
       region: 'Mumbai (ap-south-1)',
     },
     {
@@ -94,7 +94,7 @@ export default function AdminView() {
       status: 'Active',
       created: '2026-02-14',
       primary: '#EA580C',
-      secondary: '#F59E0B',
+      secondary: '#E7A23A',
       region: 'Hyderabad (ap-south-2)',
     },
     {
@@ -184,9 +184,9 @@ export default function AdminView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#EEF1F6]">
       {/* Super Admin Top Header */}
-      <header className="bg-[#111827] text-white sticky top-0 z-40 border-b border-slate-800 shadow-md">
+      <header className="bg-[#1C2433] text-white sticky top-0 z-40 border-b border-slate-800 shadow-md">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-8 h-16 flex items-center gap-3">
           <span className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white shadow-sm">
             <ShieldCheck className="w-4 h-4" />
@@ -221,10 +221,10 @@ export default function AdminView() {
       {/* Main Admin Content */}
       <main className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-[#111827]">
+          <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-[#1C2433]">
             Platform Overview
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-[#778196] mt-1">
             Global multi-tenant governance, organization subscriptions, usage logs and feature flags.
           </p>
         </div>
@@ -275,8 +275,8 @@ export default function AdminView() {
               users: 5,
               status: 'Active',
               created: new Date().toISOString().slice(0, 10),
-              primary: '#6366F1',
-              secondary: '#8B5CF6',
+              primary: '#6965ED',
+              secondary: '#8B83F6',
               region: 'Mumbai (ap-south-1)',
             }}
             searchKeys={['name', 'domain']}
@@ -315,13 +315,13 @@ export default function AdminView() {
                   <span className="flex items-center gap-3">
                     <span
                       className="w-8 h-8 rounded-lg text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-sm"
-                      style={{ background: o.primary || '#6366F1' }}
+                      style={{ background: o.primary || '#6965ED' }}
                     >
                       {o.name[0]}
                     </span>
                     <span>
-                      <span className="block font-medium text-[#111827]">{o.name}</span>
-                      <span className="block text-xs text-slate-500">{o.domain}</span>
+                      <span className="block font-medium text-[#1C2433]">{o.name}</span>
+                      <span className="block text-xs text-[#778196]">{o.domain}</span>
                     </span>
                   </span>
                 ),
@@ -381,8 +381,8 @@ export default function AdminView() {
                   <span className="flex items-center gap-2">
                     <Avatar name={u.name} size={28} />
                     <span>
-                      <span className="block font-medium text-[#111827]">{u.name}</span>
-                      <span className="block text-xs text-slate-500">{u.email}</span>
+                      <span className="block font-medium text-[#1C2433]">{u.name}</span>
+                      <span className="block text-xs text-[#778196]">{u.email}</span>
                     </span>
                   </span>
                 ),
@@ -433,13 +433,13 @@ export default function AdminView() {
               <div className="px-5 pb-5 text-sm space-y-2 border-t border-slate-100 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600">Basic · ₹999/user</span>
-                  <span className="font-semibold text-[#111827]">
+                  <span className="font-semibold text-[#1C2433]">
                     {orgs.filter((o: any) => o.plan === 'Basic').length} orgs
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600">Pro · ₹1,299/user</span>
-                  <span className="font-semibold text-[#111827]">
+                  <span className="font-semibold text-[#1C2433]">
                     {orgs.filter((o: any) => o.plan === 'Pro').length} orgs
                   </span>
                 </div>
@@ -453,7 +453,7 @@ export default function AdminView() {
               />
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+                  <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                     <th className="px-5 py-3">Organisation</th>
                     <th className="px-5 py-3">Plan</th>
                     <th className="px-5 py-3">Users</th>
@@ -464,12 +464,12 @@ export default function AdminView() {
                 <tbody>
                   {orgs.map((o: any) => (
                     <tr key={o.id} className="border-t border-slate-100 hover:bg-slate-50/50">
-                      <td className="px-5 py-3 font-medium text-[#111827]">{o.name}</td>
+                      <td className="px-5 py-3 font-medium text-[#1C2433]">{o.name}</td>
                       <td className="px-5 py-3">
                         <Badge tone={o.plan === 'Pro' ? 'brand' : 'neutral'}>{o.plan}</Badge>
                       </td>
                       <td className="px-5 py-3 text-slate-700">{o.users}</td>
-                      <td className="px-5 py-3 font-medium text-[#111827]">
+                      <td className="px-5 py-3 font-medium text-[#1C2433]">
                         {inr(o.users * (o.plan === 'Pro' ? 1299 : 999))}
                       </td>
                       <td className="px-5 py-3 text-right">
@@ -513,19 +513,19 @@ export default function AdminView() {
                 >
                   <span
                     className="w-7 h-7 rounded-md text-white text-xs font-bold flex items-center justify-center shrink-0"
-                    style={{ background: o.primary || '#6366F1' }}
+                    style={{ background: o.primary || '#6965ED' }}
                   >
                     {o.name[0]}
                   </span>
-                  <span className="text-sm font-medium truncate text-[#111827]">{o.name}</span>
+                  <span className="text-sm font-medium truncate text-[#1C2433]">{o.name}</span>
                 </button>
               ))}
             </Card>
 
             <Card className="lg:col-span-2 p-6 space-y-5" data-testid="tenant-config">
               <div>
-                <h3 className="font-semibold text-lg text-[#111827]">{t.name} Configuration</h3>
-                <p className="text-xs text-slate-500">
+                <h3 className="font-semibold text-lg text-[#1C2433]">{t.name} Configuration</h3>
+                <p className="text-xs text-[#778196]">
                   Override multi-tenant domain mapping, plan limits and isolated cloud region.
                 </p>
               </div>
@@ -615,7 +615,7 @@ export default function AdminView() {
             />
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+                <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                   <th className="px-5 py-3">Feature Name</th>
                   <th className="px-5 py-3 text-center">Basic Tier</th>
                   <th className="px-5 py-3 text-center">Pro Tier</th>
@@ -624,7 +624,7 @@ export default function AdminView() {
               <tbody>
                 {Object.entries(featuresMap).map(([f, plans]) => (
                   <tr key={f} className="border-t border-slate-100 hover:bg-slate-50/50">
-                    <td className="px-5 py-3 font-medium text-[#111827]">{f}</td>
+                    <td className="px-5 py-3 font-medium text-[#1C2433]">{f}</td>
                     {['Basic', 'Pro'].map((p) => {
                       const on = plans.includes(p);
                       return (
@@ -699,10 +699,10 @@ export default function AdminView() {
             </Card>
 
             <Card className="lg:col-span-2 p-5">
-              <h3 className="font-semibold text-sm text-[#111827] mb-1">
+              <h3 className="font-semibold text-sm text-[#1C2433] mb-1">
                 Storage & Database consumption by tenant
               </h3>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-[#778196] mb-4">
                 Storage quotas allocated per tenant plan (25 GB soft quota)
               </p>
               <div className="space-y-3.5">
@@ -710,13 +710,13 @@ export default function AdminView() {
                   const gb = [18.4, 9.2, 5.1, 22.7, 1.3][i] || 3.5;
                   return (
                     <div key={o.id} className="flex items-center gap-4 text-sm">
-                      <span className="w-48 font-medium truncate text-[#111827]">{o.name}</span>
+                      <span className="w-48 font-medium truncate text-[#1C2433]">{o.name}</span>
                       <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
                             width: `${Math.min(100, (gb / 25) * 100)}%`,
-                            background: o.primary || '#6366F1',
+                            background: o.primary || '#6965ED',
                           }}
                         />
                       </div>
@@ -733,7 +733,7 @@ export default function AdminView() {
 
         {tab === 'System' && (
           <Card className="p-6 max-w-2xl space-y-4" data-testid="system-settings">
-            <h3 className="font-semibold text-base text-[#111827]">Global Platform Settings</h3>
+            <h3 className="font-semibold text-base text-[#1C2433]">Global Platform Settings</h3>
             <div className="divide-y divide-slate-100">
               {[
                 ['maintenance', 'Maintenance mode', 'Show a maintenance banner to all tenants'],
@@ -745,8 +745,8 @@ export default function AdminView() {
                   className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0"
                 >
                   <div>
-                    <p className="text-sm font-medium text-[#111827]">{l}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{d}</p>
+                    <p className="text-sm font-medium text-[#1C2433]">{l}</p>
+                    <p className="text-xs text-[#778196] mt-0.5">{d}</p>
                   </div>
                   <Toggle
                     testid={`system-${k}`}

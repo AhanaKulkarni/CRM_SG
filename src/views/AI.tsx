@@ -38,13 +38,13 @@ export function AIAssistantView() {
       />
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 h-[calc(100vh-240px)] min-h-[520px] flex flex-col overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E5E7EB]">
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E1E5ED]">
             <span className="w-9 h-9 rounded-lg bg-brand text-white flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
             </span>
             <div>
-              <p className="font-semibold text-sm text-[#111827]">{state.bot?.name || 'Nexa'} Copilot</p>
-              <p className="text-xs text-slate-500">Live access to leads, customers, invoices and calls</p>
+              <p className="font-semibold text-sm text-[#1C2433]">{state.bot?.name || 'Nexa'} Copilot</p>
+              <p className="text-xs text-[#778196]">Live access to leads, customers, invoices and calls</p>
             </div>
           </div>
           <ChatPanel
@@ -63,22 +63,22 @@ export function AIAssistantView() {
 
         <div className="space-y-4">
           <Card className="p-5">
-            <h3 className="font-semibold text-sm mb-3 text-[#111827]">AI insights today</h3>
+            <h3 className="font-semibold text-sm mb-3 text-[#1C2433]">AI insights today</h3>
             <div className="divide-y divide-slate-100">
               <div className="flex gap-3 py-2.5 first:pt-0">
                 <Zap className="w-4 h-4 text-brand mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-[#111827]">
+                  <p className="text-sm font-medium text-[#1C2433]">
                     {highValueLeads.length} high-value lead(s) active
                   </p>
-                  <p className="text-xs text-slate-500">Assign priority follow-ups in Leads</p>
+                  <p className="text-xs text-[#778196]">Assign priority follow-ups in Leads</p>
                 </div>
               </div>
               <div className="flex gap-3 py-2.5">
                 <Zap className="w-4 h-4 text-brand mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-[#111827]">Overdue invoice tracking</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm font-medium text-[#1C2433]">Overdue invoice tracking</p>
+                  <p className="text-xs text-[#778196]">
                     {overdueCount} invoice(s) currently overdue
                   </p>
                 </div>
@@ -86,15 +86,15 @@ export function AIAssistantView() {
               <div className="flex gap-3 py-2.5 last:pb-0">
                 <Zap className="w-4 h-4 text-brand mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-[#111827]">Pipeline SLA</p>
-                  <p className="text-xs text-slate-500">Auto-assignment active for incoming leads</p>
+                  <p className="text-sm font-medium text-[#1C2433]">Pipeline SLA</p>
+                  <p className="text-xs text-[#778196]">Auto-assignment active for incoming leads</p>
                 </div>
               </div>
             </div>
           </Card>
 
           <Card className="p-5">
-            <h3 className="font-semibold text-sm mb-3 text-[#111827]">What it can do</h3>
+            <h3 className="font-semibold text-sm mb-3 text-[#1C2433]">What it can do</h3>
             <ul className="text-sm text-slate-600 space-y-2 list-disc pl-4 leading-relaxed">
               <li>Query real database records directly</li>
               <li>Report open leads and deal pipelines</li>
@@ -137,7 +137,7 @@ export function AIChatbotView() {
       />
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="p-5 space-y-4 h-fit">
-          <h3 className="font-semibold text-sm text-[#111827]">Bot configuration</h3>
+          <h3 className="font-semibold text-sm text-[#1C2433]">Bot configuration</h3>
           <Field
             f={{ key: 'botname', label: 'Bot name' }}
             value={cfg.name}
@@ -155,8 +155,8 @@ export function AIChatbotView() {
           ].map(([key, t, d]: any) => (
             <div key={key} className="flex items-center justify-between gap-3 pt-2">
               <div>
-                <p className="text-sm font-medium text-[#111827]">{t}</p>
-                <p className="text-xs text-slate-500">{d}</p>
+                <p className="text-sm font-medium text-[#1C2433]">{t}</p>
+                <p className="text-xs text-[#778196]">{d}</p>
               </div>
               <Toggle
                 testid={`bot-${key}`}
@@ -209,8 +209,8 @@ export function AIChatbotView() {
                   {n[0]}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#111827]">{n}</p>
-                  <p className="text-xs text-slate-500">{s}</p>
+                  <p className="text-sm font-medium text-[#1C2433]">{n}</p>
+                  <p className="text-xs text-[#778196]">{s}</p>
                   <Badge tone="brand" className="mt-1">
                     {r}
                   </Badge>
@@ -325,8 +325,8 @@ export function AICallingView() {
                     {l.name[0]}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-[#111827]">{l.name}</p>
-                    <p className="text-xs text-slate-500 truncate">{l.company}</p>
+                    <p className="text-sm font-medium truncate text-[#1C2433]">{l.name}</p>
+                    <p className="text-xs text-[#778196] truncate">{l.company}</p>
                   </div>
                   <Button
                     size="sm"
@@ -372,7 +372,7 @@ export function AICallingView() {
                 <div
                   className={cn(
                     'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm',
-                    who === 'AI' ? 'bg-brand-soft text-[#111827]' : 'bg-slate-100 text-slate-800'
+                    who === 'AI' ? 'bg-brand-soft text-[#1C2433]' : 'bg-slate-100 text-slate-800'
                   )}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">
@@ -389,8 +389,8 @@ export function AICallingView() {
               </p>
             )}
           </div>
-          <div className="border-t border-[#E5E7EB] px-5 py-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+          <div className="border-t border-[#E1E5ED] px-5 py-3">
+            <p className="text-xs font-semibold text-[#778196] uppercase tracking-wider mb-2">
               Recent AI calls
             </p>
             {log.length === 0 ? (
@@ -398,8 +398,8 @@ export function AICallingView() {
             ) : (
               log.slice(0, 4).map((x, i) => (
                 <div key={i} className="flex justify-between text-sm py-1.5">
-                  <span className="font-medium text-[#111827]">
-                    {x.n} · <span className="text-slate-500 font-normal">{x.c}</span>
+                  <span className="font-medium text-[#1C2433]">
+                    {x.n} · <span className="text-[#778196] font-normal">{x.c}</span>
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="text-xs text-slate-400">{dur(x.d)}</span>
@@ -535,7 +535,7 @@ export function AutomationView() {
                   data-testid={`wf-${w.id}`}
                   className={cn(
                     'w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors',
-                    selId === w.id ? 'bg-brand-soft text-[#111827] font-semibold' : 'hover:bg-slate-50 text-slate-700'
+                    selId === w.id ? 'bg-brand-soft text-[#1C2433] font-semibold' : 'hover:bg-slate-50 text-slate-700'
                   )}
                 >
                   <div className="min-w-0">
@@ -549,12 +549,12 @@ export function AutomationView() {
           </Card>
 
           <Card className="lg:col-span-2 p-6 space-y-6" data-testid="workflow-builder">
-            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E1E5ED]">
               <div className="flex-1 min-w-[200px]">
                 <input
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                  className="text-lg font-semibold outline-none w-full border-b border-transparent focus:border-brand text-[#111827]"
+                  className="text-lg font-semibold outline-none w-full border-b border-transparent focus:border-brand text-[#1C2433]"
                   data-testid="workflow-name-input"
                 />
                 <p className="text-xs text-slate-400 mt-1">Runs: {draft.runs || 0}</p>
@@ -575,7 +575,7 @@ export function AutomationView() {
             </div>
 
             {/* Trigger */}
-            <div className="rounded-xl border border-[#E5E7EB] p-4 bg-white shadow-sm">
+            <div className="rounded-xl border border-[#E1E5ED] p-4 bg-white shadow-sm">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 block">
                 1. Trigger
               </span>
@@ -595,7 +595,7 @@ export function AutomationView() {
             </div>
 
             {/* Actions */}
-            <div className="rounded-xl border border-[#E5E7EB] p-4 bg-white shadow-sm space-y-3">
+            <div className="rounded-xl border border-[#E1E5ED] p-4 bg-white shadow-sm space-y-3">
               <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                   2. Actions ({draft.actions.length})
@@ -645,7 +645,7 @@ export function AutomationView() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+                <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                   <th className="px-5 py-3 font-medium">Workflow</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Time</th>
@@ -662,11 +662,11 @@ export function AutomationView() {
                 ) : (
                   (state.runs || []).map((r: any) => (
                     <tr key={r.id} className="border-t border-slate-100">
-                      <td className="px-5 py-3 font-semibold text-[#111827]">{r.workflow}</td>
+                      <td className="px-5 py-3 font-semibold text-[#1C2433]">{r.workflow}</td>
                       <td className="px-5 py-3">
                         <Badge tone={r.status === 'Success' ? 'success' : 'danger'}>{r.status}</Badge>
                       </td>
-                      <td className="px-5 py-3 text-slate-500">{new Date(r.time).toLocaleString('en-IN')}</td>
+                      <td className="px-5 py-3 text-[#778196]">{new Date(r.time).toLocaleString('en-IN')}</td>
                       <td className="px-5 py-3 text-slate-600">{r.detail}</td>
                     </tr>
                   ))

@@ -99,7 +99,7 @@ export default function ChatView() {
             className={cn(
               'w-full flex items-center gap-2 px-3 h-9 rounded-lg text-sm transition-colors text-left',
               ch === c.id
-                ? 'bg-brand-soft text-[#111827] font-semibold'
+                ? 'bg-brand-soft text-[#1C2433] font-semibold'
                 : 'text-slate-600 hover:bg-slate-50'
             )}
           >
@@ -116,16 +116,16 @@ export default function ChatView() {
 
   return (
     <div>
-      <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight mb-1 text-[#111827]">
+      <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight mb-1 text-[#1C2433]">
         Internal Chat
       </h1>
-      <p className="text-sm text-slate-500 mb-6">Department channels and direct messages for your team.</p>
+      <p className="text-sm text-[#778196] mb-6">Department channels and direct messages for your team.</p>
 
       <Card className="flex h-[calc(100vh-230px)] min-h-[480px] overflow-hidden">
         {/* Left Channels List */}
         <aside
           className={cn(
-            'w-full md:w-64 border-r border-[#E5E7EB] p-3 overflow-y-auto thin-scroll',
+            'w-full md:w-64 border-r border-[#E1E5ED] p-3 overflow-y-auto thin-scroll',
             !mobileList && 'hidden md:block'
           )}
         >
@@ -135,9 +135,9 @@ export default function ChatView() {
 
         {/* Right Messages Area */}
         <section className={cn('flex-1 flex flex-col min-w-0 bg-white', mobileList && 'hidden md:flex')}>
-          <div className="h-14 flex items-center gap-2 px-4 border-b border-[#E5E7EB]">
+          <div className="h-14 flex items-center gap-2 px-4 border-b border-[#E1E5ED]">
             <button
-              className="md:hidden p-1 mr-1 text-slate-500 hover:text-slate-800"
+              className="md:hidden p-1 mr-1 text-[#778196] hover:text-slate-800"
               onClick={() => setMobileList(true)}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -147,7 +147,7 @@ export default function ChatView() {
             ) : (
               <Avatar name={channel?.name || 'General'} size={24} />
             )}
-            <span className="font-semibold text-sm text-[#111827]" data-testid="chat-channel-title">
+            <span className="font-semibold text-sm text-[#1C2433]" data-testid="chat-channel-title">
               {channel?.name || 'general'}
             </span>
             {channel?.type === 'channel' && (
@@ -170,7 +170,7 @@ export default function ChatView() {
                   <Avatar name={m.author} size={34} />
                   <div className="min-w-0">
                     <p className="text-sm">
-                      <span className="font-semibold text-[#111827]">{m.author}</span>{' '}
+                      <span className="font-semibold text-[#1C2433]">{m.author}</span>{' '}
                       <span className="text-xs text-slate-400 ml-1">
                         {new Date(m.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                       </span>
@@ -178,12 +178,12 @@ export default function ChatView() {
                     {m.text && <p className="text-sm text-slate-700 mt-0.5 leading-relaxed">{m.text}</p>}
                     {m.file && (
                       <div
-                        className="mt-1.5 inline-flex items-center gap-3 rounded-lg border border-[#E5E7EB] px-3 py-2 bg-slate-50"
+                        className="mt-1.5 inline-flex items-center gap-3 rounded-lg border border-[#E1E5ED] px-3 py-2 bg-slate-50"
                         data-testid="chat-file"
                       >
                         <FileText className="w-5 h-5 text-brand" />
                         <div>
-                          <p className="text-sm font-medium text-[#111827]">{m.file}</p>
+                          <p className="text-sm font-medium text-[#1C2433]">{m.file}</p>
                           <p className="text-xs text-slate-400">Attached file</p>
                         </div>
                       </div>
@@ -195,7 +195,7 @@ export default function ChatView() {
             <div ref={end} />
           </div>
 
-          <form onSubmit={send} className="flex gap-2 p-3 border-t border-[#E5E7EB]">
+          <form onSubmit={send} className="flex gap-2 p-3 border-t border-[#E1E5ED]">
             <input
               type="file"
               ref={fileRef}
@@ -206,7 +206,7 @@ export default function ChatView() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="h-10 w-10 shrink-0 rounded-lg border border-[#E5E7EB] flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors"
+              className="h-10 w-10 shrink-0 rounded-lg border border-[#E1E5ED] flex items-center justify-center text-[#778196] hover:bg-slate-50 transition-colors"
               data-testid="chat-attach-btn"
               title="Attach File"
             >
@@ -217,7 +217,7 @@ export default function ChatView() {
               value={txt}
               onChange={(e) => setTxt(e.target.value)}
               placeholder={`Message ${channel.type === 'channel' ? '#' : ''}${channel.name}`}
-              className="flex-1 min-w-0 h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand"
+              className="flex-1 min-w-0 h-10 rounded-lg border border-[#E1E5ED] px-3 text-sm outline-none focus:border-brand"
             />
             <button
               type="submit"

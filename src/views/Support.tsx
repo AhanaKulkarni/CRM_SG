@@ -135,8 +135,8 @@ export default function SupportView() {
               label: 'Ticket',
               render: (x: any) => (
                 <div>
-                  <p className="font-medium text-[#111827]">{x.subject}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-medium text-[#1C2433]">{x.subject}</p>
+                  <p className="text-xs text-[#778196]">
                     {x.number} · {x.category || 'General'}
                   </p>
                 </div>
@@ -192,8 +192,8 @@ export default function SupportView() {
                   data-testid={`kb-${k.id}`}
                 >
                   <BookOpen className="w-5 h-5 text-brand mb-3" />
-                  <p className="font-medium text-sm text-[#111827]">{k.title}</p>
-                  <div className="flex justify-between items-center mt-4 text-xs text-slate-500">
+                  <p className="font-medium text-sm text-[#1C2433]">{k.title}</p>
+                  <div className="flex justify-between items-center mt-4 text-xs text-[#778196]">
                     <Badge tone="neutral">{k.category}</Badge>
                     <span className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
@@ -209,7 +209,7 @@ export default function SupportView() {
       {tab === 'Customer History' && (
         <Card className="p-5" data-testid="support-history">
           <label className="block max-w-xs mb-4">
-            <span className="text-xs text-slate-500 block mb-1">Select Customer Account</span>
+            <span className="text-xs text-[#778196] block mb-1">Select Customer Account</span>
             <select
               data-testid="support-history-customer"
               className={inputCls}
@@ -245,10 +245,10 @@ export default function SupportView() {
                     onClick={() => setOpen(x.id)}
                   >
                     <div>
-                      <p className="font-medium text-[#111827]">
+                      <p className="font-medium text-[#1C2433]">
                         {x.number} · {x.subject}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-[#778196]">
                         {fmtDate(x.created)} · Agent: {x.agent || 'Unassigned'}
                       </p>
                     </div>
@@ -275,7 +275,7 @@ export default function SupportView() {
         {activeTicket && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <label className="text-xs text-slate-500 font-medium">
+              <label className="text-xs text-[#778196] font-medium">
                 Status
                 <select
                   data-testid="ticket-status-select"
@@ -294,7 +294,7 @@ export default function SupportView() {
                 </select>
               </label>
 
-              <label className="text-xs text-slate-500 font-medium">
+              <label className="text-xs text-[#778196] font-medium">
                 Priority
                 <select
                   className={`${inputCls} mt-1`}
@@ -312,7 +312,7 @@ export default function SupportView() {
                 </select>
               </label>
 
-              <label className="text-xs text-slate-500 font-medium col-span-2 sm:col-span-1">
+              <label className="text-xs text-[#778196] font-medium col-span-2 sm:col-span-1">
                 Assigned Agent
                 <select
                   className={`${inputCls} mt-1`}
@@ -350,7 +350,7 @@ export default function SupportView() {
                   <Avatar name={r.a || 'User'} size={32} />
                   <div className="flex-1 rounded-xl bg-slate-50 p-3 text-sm border border-slate-100">
                     <div className="flex justify-between items-center mb-1">
-                      <p className="text-xs font-semibold text-[#111827]">{r.a}</p>
+                      <p className="text-xs font-semibold text-[#1C2433]">{r.a}</p>
                       {r.t && <span className="text-[11px] text-slate-400">{fmtDate(r.t)}</span>}
                     </div>
                     <p className="text-slate-700 leading-relaxed">{r.m}</p>
@@ -412,7 +412,7 @@ export default function SupportView() {
             <li>Fill in the required fields and choose the appropriate team member assignment.</li>
             <li>Save — changes are synchronized immediately across your organization’s database.</li>
           </ol>
-          <p className="text-xs text-slate-500 pt-2 border-t border-slate-100">
+          <p className="text-xs text-[#778196] pt-2 border-t border-slate-100">
             Need further help? Open a support ticket above and our team will respond within 15 minutes.
           </p>
         </div>

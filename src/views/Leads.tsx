@@ -41,17 +41,17 @@ import {
 } from '@/components/kit';
 
 const STAGE_COLOR: Record<string, string> = {
-  New: '#6366F1',
+  New: '#6965ED',
   Assigned: '#3B82F6',
-  Attempted: '#F59E0B',
+  Attempted: '#E7A23A',
   Contacted: '#0EA5E9',
-  Interested: '#8B5CF6',
+  Interested: '#8B83F6',
   'Follow-up Scheduled': '#EC4899',
   Qualified: '#14B8A6',
-  Converted: '#10B981',
+  Converted: '#26A879',
   'Not Interested': '#64748B',
-  'Do Not Call': '#EF4444',
-  Won: '#10B981',
+  'Do Not Call': '#E15B63',
+  Won: '#26A879',
   Lost: '#64748B',
 };
 
@@ -102,7 +102,7 @@ export function Kanban({ items = [], stages = [], field, onMove, render, colors 
           >
             <div className="flex items-center gap-2 px-1.5 py-1 mb-2">
               <span className="w-2 h-2 rounded-full" style={{ background: colors[st] || '#94A3B8' }} />
-              <span className="text-sm font-semibold text-[#111827]">{st}</span>
+              <span className="text-sm font-semibold text-[#1C2433]">{st}</span>
               <span className="text-xs text-slate-400 ml-auto tabular-nums">{list.length}</span>
             </div>
             <div className="space-y-2 min-h-[80px]">
@@ -183,12 +183,12 @@ export function LeadsView() {
           <Avatar name={l.name} size={30} />
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="font-medium text-[#111827]">{l.name}</p>
+              <p className="font-medium text-[#1C2433]">{l.name}</p>
               {(l.dnc || l.status === 'Do Not Call') && (
                 <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">DNC</span>
               )}
             </div>
-            <p className="text-xs text-slate-500">{l.company}</p>
+            <p className="text-xs text-[#778196]">{l.company}</p>
           </div>
         </div>
       ),
@@ -347,8 +347,8 @@ export function LeadsView() {
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar name={l.name} size={36} />
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate text-[#111827]">{l.name}</p>
-                        <p className="text-xs text-slate-500 truncate">{l.company}</p>
+                        <p className="font-semibold text-sm truncate text-[#1C2433]">{l.name}</p>
+                        <p className="text-xs text-[#778196] truncate">{l.company}</p>
                       </div>
                     </div>
                     <Badge>{l.priority}</Badge>
@@ -356,7 +356,7 @@ export function LeadsView() {
                   <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-100 text-xs">
                     <div>
                       <span className="text-slate-400">Deal: </span>
-                      <span className="font-semibold text-[#111827]">{inr(l.value)}</span>
+                      <span className="font-semibold text-[#1C2433]">{inr(l.value)}</span>
                     </div>
                     <Badge>{l.status}</Badge>
                   </div>
@@ -387,7 +387,7 @@ export function LeadsView() {
               <Plus className="w-4 h-4" />
               Add lead
             </Button>
-            <span className="text-xs text-slate-500 self-center hidden sm:inline">
+            <span className="text-xs text-[#778196] self-center hidden sm:inline">
               Drag cards between stages to update them.
             </span>
           </div>
@@ -409,14 +409,14 @@ export function LeadsView() {
                 onClick={() => router.push(`/app/leads/${l.id}`)}
               >
                 <div className="flex justify-between gap-2">
-                  <p className="text-sm font-medium truncate text-[#111827]">{l.company}</p>
+                  <p className="text-sm font-medium truncate text-[#1C2433]">{l.company}</p>
                   <Badge>{l.priority}</Badge>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#778196] mt-0.5">
                   {l.name} · {l.source}
                 </p>
                 <div className="flex items-center justify-between mt-3">
-                  <span className="text-sm font-semibold tabular-nums text-[#111827]">{inr(l.value)}</span>
+                  <span className="text-sm font-semibold tabular-nums text-[#1C2433]">{inr(l.value)}</span>
                   <Avatar name={l.owner || '?'} size={22} />
                 </div>
               </Card>
@@ -499,7 +499,7 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
     <div>
       <button
         onClick={() => router.push('/app/leads')}
-        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 mb-4 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#778196] hover:text-slate-800 mb-4 transition-colors"
         data-testid="lead-back-btn"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -524,14 +524,14 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
         <Avatar name={lead.name} size={56} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-[#111827]" data-testid="lead-detail-name">
+            <h1 className="text-2xl font-semibold tracking-tight text-[#1C2433]" data-testid="lead-detail-name">
               {lead.name}
             </h1>
             {isDNC && (
               <span className="text-xs bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded">Do Not Call</span>
             )}
           </div>
-          <p className="text-slate-500 text-sm">
+          <p className="text-[#778196] text-sm">
             {lead.company} · {inr(lead.value)} potential
           </p>
         </div>
@@ -578,7 +578,7 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
                 className={cn(
                   'flex-1 h-9 px-2 text-[11px] font-medium rounded-md transition-colors truncate',
                   isCurrent ? 'ring-2 ring-brand font-semibold' : '',
-                  isPassed ? 'text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200',
+                  isPassed ? 'text-white' : 'bg-slate-100 text-[#778196] hover:bg-slate-200',
                   isDncOrLost && 'bg-red-500 text-white'
                 )}
                 style={isPassed && !isDncOrLost ? { background: STAGE_COLOR[s] || 'var(--brand)' } : undefined}
@@ -594,7 +594,7 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
       {/* Details & Activity */}
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="p-5 space-y-4 h-fit">
-          <h3 className="font-semibold text-[#111827]">Lead details</h3>
+          <h3 className="font-semibold text-[#1C2433]">Lead details</h3>
           {[
             [Mail, lead.email || '—'],
             [Phone, lead.phone || '—'],
@@ -606,27 +606,27 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
             </div>
           ))}
 
-          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#E5E7EB] text-sm">
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#E1E5ED] text-sm">
             <div>
-              <p className="text-xs text-slate-500">Source</p>
-              <p className="font-medium text-[#111827]">{lead.source}</p>
+              <p className="text-xs text-[#778196]">Source</p>
+              <p className="font-medium text-[#1C2433]">{lead.source}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Priority</p>
+              <p className="text-xs text-[#778196]">Priority</p>
               <Badge>{lead.priority}</Badge>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Created</p>
-              <p className="font-medium text-[#111827]">{fmtDate(lead.created)}</p>
+              <p className="text-xs text-[#778196]">Created</p>
+              <p className="font-medium text-[#1C2433]">{fmtDate(lead.created)}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Stage</p>
+              <p className="text-xs text-[#778196]">Stage</p>
               <Badge>{lead.status}</Badge>
             </div>
           </div>
 
-          <label className="block pt-3 border-t border-[#E5E7EB]">
-            <span className="text-xs font-medium text-slate-500">
+          <label className="block pt-3 border-t border-[#E1E5ED]">
+            <span className="text-xs font-medium text-[#778196]">
               Assigned employee {isCaller && '(Admin only)'}
             </span>
             <select
@@ -690,7 +690,7 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
               <Button data-testid="lead-note-submit">Add</Button>
             </form>
 
-            <ol className="relative border-l border-[#E5E7EB] ml-2 space-y-4">
+            <ol className="relative border-l border-[#E1E5ED] ml-2 space-y-4">
               {timeline.map((t: any, i: number) => (
                 <li key={i} className="ml-5">
                   <span className="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-brand mt-1.5" />

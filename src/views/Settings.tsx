@@ -81,8 +81,8 @@ export function WhiteLabelView() {
   const presets = [
     ['#1E2B6D', '#22C55E'],
     ['#0D9488', '#0EA5E9'],
-    ['#6366F1', '#8B5CF6'],
-    ['#EA580C', '#F59E0B'],
+    ['#6965ED', '#8B83F6'],
+    ['#EA580C', '#E7A23A'],
     ['#2563EB', '#7C3AED'],
     ['#16A34A', '#65A30D'],
   ];
@@ -127,7 +127,7 @@ export function WhiteLabelView() {
       <div className="grid xl:grid-cols-[1fr_1.1fr] gap-6">
         <div className="space-y-5">
           <Card className="p-5 space-y-4">
-            <h3 className="font-semibold text-sm text-[#111827]">Brand identity</h3>
+            <h3 className="font-semibold text-sm text-[#1C2433]">Brand identity</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field
                 f={{ key: 'brand-name', label: 'Organisation / product name' }}
@@ -148,7 +148,7 @@ export function WhiteLabelView() {
                 <div key={k}>
                   <span className="block text-xs font-medium text-slate-600 mb-1.5">{l}</span>
                   <div className="flex items-center gap-3">
-                    <span className="w-12 h-12 rounded-lg border border-[#E5E7EB] bg-slate-50 flex items-center justify-center overflow-hidden">
+                    <span className="w-12 h-12 rounded-lg border border-[#E1E5ED] bg-slate-50 flex items-center justify-center overflow-hidden">
                       {v ? (
                         <img src={v} alt={l} className="w-full h-full object-contain" />
                       ) : (
@@ -160,8 +160,8 @@ export function WhiteLabelView() {
                         </span>
                       )}
                     </span>
-                    <label className="cursor-pointer inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#E5E7EB] text-sm hover:bg-slate-50">
-                      <Upload className="w-4 h-4 text-slate-500" />
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#E1E5ED] text-sm hover:bg-slate-50">
+                      <Upload className="w-4 h-4 text-[#778196]" />
                       Upload
                       <input
                         data-testid={`brand-${k}-upload`}
@@ -191,7 +191,7 @@ export function WhiteLabelView() {
           </Card>
 
           <Card className="p-5 space-y-4">
-            <h3 className="font-semibold text-sm text-[#111827]">Brand colours</h3>
+            <h3 className="font-semibold text-sm text-[#1C2433]">Brand colours</h3>
             <div className="grid grid-cols-2 gap-4">
               {[
                 ['primary', 'Primary accent'],
@@ -203,9 +203,9 @@ export function WhiteLabelView() {
                     <input
                       data-testid={`brand-${k}-color`}
                       type="color"
-                      value={b[k] || '#6366F1'}
+                      value={b[k] || '#6965ED'}
                       onChange={(e) => set({ [k]: e.target.value })}
-                      className="h-9 w-12 rounded-lg border border-[#E5E7EB] cursor-pointer p-0.5"
+                      className="h-9 w-12 rounded-lg border border-[#E1E5ED] cursor-pointer p-0.5"
                     />
                     <input
                       className={cn(inputCls, 'font-mono uppercase')}
@@ -235,7 +235,7 @@ export function WhiteLabelView() {
           </Card>
 
           <Card className="p-5 space-y-4">
-            <h3 className="font-semibold text-sm text-[#111827]">Login page customization</h3>
+            <h3 className="font-semibold text-sm text-[#1C2433]">Login page customization</h3>
             <Field
               f={{ key: 'login-headline', label: 'Login Hero Headline' }}
               value={b.loginHeadline}
@@ -249,7 +249,7 @@ export function WhiteLabelView() {
           </Card>
 
           <Card className="p-5">
-            <h3 className="font-semibold text-sm text-[#111827] mb-4">
+            <h3 className="font-semibold text-sm text-[#1C2433] mb-4">
               Company & invoice entity details
             </h3>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -275,7 +275,7 @@ export function WhiteLabelView() {
         <div className="space-y-4 xl:sticky xl:top-24 h-fit">
           <Card className="p-5" data-testid="brand-preview">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-sm text-[#111827]">Live preview</h3>
+              <h3 className="font-semibold text-sm text-[#1C2433]">Live preview</h3>
               <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg">
                 {(['Dashboard', 'Login'] as const).map((x) => (
                   <button
@@ -285,7 +285,7 @@ export function WhiteLabelView() {
                     className={cn(
                       'px-3 h-7 rounded-md text-xs font-medium transition-all',
                       pv === x
-                        ? 'bg-white text-[#111827] shadow-sm font-semibold'
+                        ? 'bg-white text-[#1C2433] shadow-sm font-semibold'
                         : 'text-slate-600 hover:text-slate-900'
                     )}
                   >
@@ -296,8 +296,8 @@ export function WhiteLabelView() {
             </div>
 
             {pv === 'Dashboard' ? (
-              <div className="rounded-xl border border-[#E5E7EB] overflow-hidden flex h-[380px] text-[11px] shadow-sm">
-                <div className="w-36 bg-[#111827] p-3 space-y-1.5 shrink-0 flex flex-col">
+              <div className="rounded-xl border border-[#E1E5ED] overflow-hidden flex h-[380px] text-[11px] shadow-sm">
+                <div className="w-36 bg-[#1C2433] p-3 space-y-1.5 shrink-0 flex flex-col">
                   <div className="mb-3 scale-90 origin-left">
                     <BrandMark brand={b} light size={22} />
                   </div>
@@ -314,28 +314,28 @@ export function WhiteLabelView() {
                   ))}
                 </div>
 
-                <div className="flex-1 bg-[#F8FAFC] p-4 space-y-3 min-w-0 overflow-hidden">
-                  <p className="font-semibold text-sm text-[#111827]">Overview</p>
+                <div className="flex-1 bg-[#EEF1F6] p-4 space-y-3 min-w-0 overflow-hidden">
+                  <p className="font-semibold text-sm text-[#1C2433]">Overview</p>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       ['Leads', '1,284'],
                       ['Revenue', '₹12.4L'],
                       ['Conv.', '24.8%'],
                     ].map(([l, val]) => (
-                      <div key={l} className="bg-white rounded-lg border border-[#E5E7EB] p-2">
+                      <div key={l} className="bg-white rounded-lg border border-[#E1E5ED] p-2">
                         <p className="text-slate-400 text-[10px]">{l}</p>
-                        <p className="font-semibold text-xs text-[#111827]">{val}</p>
+                        <p className="font-semibold text-xs text-[#1C2433]">{val}</p>
                       </div>
                     ))}
                   </div>
-                  <div className="bg-white rounded-lg border border-[#E5E7EB] p-3 h-28 flex items-end gap-1.5">
+                  <div className="bg-white rounded-lg border border-[#E1E5ED] p-3 h-28 flex items-end gap-1.5">
                     {[40, 65, 50, 80, 60, 90, 75, 100].map((h, i) => (
                       <div
                         key={i}
                         className="flex-1 rounded-t transition-all"
                         style={{
                           height: `${h}%`,
-                          background: i % 2 ? b.secondary || '#8B5CF6' : b.primary || '#6366F1',
+                          background: i % 2 ? b.secondary || '#8B83F6' : b.primary || '#6965ED',
                         }}
                       />
                     ))}
@@ -357,8 +357,8 @@ export function WhiteLabelView() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl overflow-hidden grid grid-cols-2 h-[380px] text-[11px] border border-[#E5E7EB] shadow-sm">
-                <div className="bg-[#111827] p-5 flex flex-col justify-between">
+              <div className="rounded-xl overflow-hidden grid grid-cols-2 h-[380px] text-[11px] border border-[#E1E5ED] shadow-sm">
+                <div className="bg-[#1C2433] p-5 flex flex-col justify-between">
                   <BrandMark brand={b} light size={22} />
                   <div>
                     <p className="text-white text-sm font-semibold leading-snug">
@@ -368,12 +368,12 @@ export function WhiteLabelView() {
                       {b.loginSub}
                     </p>
                   </div>
-                  <p className="text-slate-500 text-[10px]">© {b.company?.legal || 'AetherX'}</p>
+                  <p className="text-[#778196] text-[10px]">© {b.company?.legal || 'AetherX'}</p>
                 </div>
-                <div className="bg-white p-5 flex flex-col justify-center gap-2 border-l border-[#E5E7EB]">
-                  <p className="font-semibold text-xs text-[#111827]">Sign in to your account</p>
-                  <div className="h-7 rounded border border-[#E5E7EB] bg-slate-50" />
-                  <div className="h-7 rounded border border-[#E5E7EB] bg-slate-50" />
+                <div className="bg-white p-5 flex flex-col justify-center gap-2 border-l border-[#E1E5ED]">
+                  <p className="font-semibold text-xs text-[#1C2433]">Sign in to your account</p>
+                  <div className="h-7 rounded border border-[#E1E5ED] bg-slate-50" />
+                  <div className="h-7 rounded border border-[#E1E5ED] bg-slate-50" />
                   <div
                     className="h-7 rounded text-white flex items-center justify-center font-medium text-xs shadow-sm mt-1"
                     style={{ background: b.primary }}
@@ -386,10 +386,10 @@ export function WhiteLabelView() {
           </Card>
 
           <Card className="p-5" data-testid="tenant-brands">
-            <h3 className="font-semibold text-sm text-[#111827] mb-1">
+            <h3 className="font-semibold text-sm text-[#1C2433] mb-1">
               Multi-tenant brand presets
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
+            <p className="text-xs text-[#778196] mb-4">
               Apply a sample client organization branding to verify instant multi-tenant white-labeling.
             </p>
             <div className="grid sm:grid-cols-2 gap-2">
@@ -401,13 +401,13 @@ export function WhiteLabelView() {
                     set({
                       name: o.name,
                       short: o.name.split(' ')[0],
-                      primary: o.primary || '#6366F1',
-                      secondary: o.secondary || '#8B5CF6',
+                      primary: o.primary || '#6965ED',
+                      secondary: o.secondary || '#8B83F6',
                       logo: '',
                     });
                     toast.success(`${o.name} branding applied`);
                   }}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E7EB] hover:bg-slate-50 text-left transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-[#E1E5ED] hover:bg-slate-50 text-left transition-colors"
                 >
                   <span
                     className="w-8 h-8 rounded-lg text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm"
@@ -416,10 +416,10 @@ export function WhiteLabelView() {
                     {o.name[0]}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium truncate text-[#111827]">
+                    <span className="block text-sm font-medium truncate text-[#1C2433]">
                       {o.name}
                     </span>
-                    <span className="block text-xs text-slate-500 truncate">{o.domain}</span>
+                    <span className="block text-xs text-[#778196] truncate">{o.domain}</span>
                   </span>
                   {b.name === o.name && <Check className="w-4 h-4 text-brand ml-auto shrink-0" />}
                 </button>
@@ -516,13 +516,13 @@ export function SubscriptionView() {
                     <Badge tone="brand">Current plan</Badge>
                   </span>
                 )}
-                <p className="font-semibold text-lg text-[#111827]">{p.name}</p>
-                <p className="text-sm text-slate-500 mt-1">{p.desc}</p>
+                <p className="font-semibold text-lg text-[#1C2433]">{p.name}</p>
+                <p className="text-sm text-[#778196] mt-1">{p.desc}</p>
                 <p className="mt-4">
-                  <span className="text-3xl font-semibold tracking-tight text-[#111827]">
+                  <span className="text-3xl font-semibold tracking-tight text-[#1C2433]">
                     {inr(p.price)}
                   </span>
-                  <span className="text-sm text-slate-500"> /user/month</span>
+                  <span className="text-sm text-[#778196]"> /user/month</span>
                 </p>
                 <ul className="mt-6 space-y-2.5 text-sm">
                   {Object.entries(featuresMap).map(([f, plans]) => {
@@ -572,15 +572,15 @@ export function SubscriptionView() {
 
         <Card className="p-6 flex flex-col justify-between" data-testid="seat-manager">
           <div>
-            <p className="font-semibold text-lg text-[#111827]">Users & Seats</p>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="font-semibold text-lg text-[#1C2433]">Users & Seats</p>
+            <p className="text-sm text-[#778196] mt-1">
               Adjust licensed seats to add more teammates
             </p>
 
             <div className="flex items-center gap-3 mt-6">
               <button
                 onClick={() => setSeats(Math.max(1, seats - 1))}
-                className="w-10 h-10 rounded-lg border border-[#E5E7EB] text-lg font-semibold hover:bg-slate-50"
+                className="w-10 h-10 rounded-lg border border-[#E1E5ED] text-lg font-semibold hover:bg-slate-50"
                 data-testid="seat-minus"
               >
                 −
@@ -594,7 +594,7 @@ export function SubscriptionView() {
               />
               <button
                 onClick={() => setSeats(seats + 1)}
-                className="w-10 h-10 rounded-lg border border-[#E5E7EB] text-lg font-semibold hover:bg-slate-50"
+                className="w-10 h-10 rounded-lg border border-[#E1E5ED] text-lg font-semibold hover:bg-slate-50"
                 data-testid="seat-plus"
               >
                 +
@@ -612,7 +612,7 @@ export function SubscriptionView() {
                 <span>GST 18%</span>
                 <span>{inr(seats * plan.price * 0.18)}</span>
               </div>
-              <div className="flex justify-between font-semibold pt-2 border-t border-slate-200 text-[#111827]">
+              <div className="flex justify-between font-semibold pt-2 border-t border-slate-200 text-[#1C2433]">
                 <span>Total monthly renewal</span>
                 <span data-testid="seat-total">{inr(seats * plan.price * 1.18)}</span>
               </div>
@@ -638,7 +638,7 @@ export function SubscriptionView() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                 <th className="px-5 py-3">Invoice</th>
                 <th className="px-5 py-3">Date</th>
                 <th className="px-5 py-3">Plan</th>
@@ -669,13 +669,13 @@ export function SubscriptionView() {
                 },
               ]).map((x: any) => (
                 <tr key={x.id} className="border-t border-slate-100 hover:bg-slate-50/50">
-                  <td className="px-5 py-3 font-medium text-[#111827]">{x.number}</td>
+                  <td className="px-5 py-3 font-medium text-[#1C2433]">{x.number}</td>
                   <td className="px-5 py-3 text-slate-600">{fmtDate(x.date)}</td>
                   <td className="px-5 py-3">
                     <Badge>{x.plan}</Badge>
                   </td>
                   <td className="px-5 py-3 text-slate-700">{x.seats}</td>
-                  <td className="px-5 py-3 font-medium text-[#111827]">{inr(x.amount)}</td>
+                  <td className="px-5 py-3 font-medium text-[#1C2433]">{inr(x.amount)}</td>
                   <td className="px-5 py-3">
                     <Badge tone="success">{x.status}</Badge>
                   </td>
@@ -759,8 +759,8 @@ export default function SettingsView() {
             <div className="flex items-center gap-4">
               <Avatar name={prof.name || 'User'} size={56} />
               <div>
-                <p className="font-semibold text-lg text-[#111827]">{prof.name}</p>
-                <p className="text-sm text-slate-500">{me.role || 'Admin'}</p>
+                <p className="font-semibold text-lg text-[#1C2433]">{prof.name}</p>
+                <p className="text-sm text-[#778196]">{me.role || 'Admin'}</p>
               </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -821,7 +821,7 @@ export default function SettingsView() {
                 onChange={() => toast.success('Workspace default currency updated')}
               />
             </div>
-            <p className="text-xs text-slate-500 pt-2 border-t border-slate-100">
+            <p className="text-xs text-[#778196] pt-2 border-t border-slate-100">
               Logos, brand colors, tax legal entities and domains are managed under{' '}
               <span className="font-semibold text-brand">White-Label Configuration</span>.
             </p>
@@ -837,7 +837,7 @@ export default function SettingsView() {
               sms: 'SMS for urgent escalations & payments',
             }).map(([k, l]) => (
               <div key={k} className="flex justify-between items-center py-3.5 first:pt-0 last:pb-0">
-                <span className="text-sm font-medium text-[#111827]">{l}</span>
+                <span className="text-sm font-medium text-[#1C2433]">{l}</span>
                 <Toggle
                   testid={`pref-${k}`}
                   checked={(prefs as any)[k]}
@@ -860,7 +860,7 @@ export default function SettingsView() {
                 ip: 'Restrict login to company IP allowlist',
               }).map(([k, l]) => (
                 <div key={k} className="flex justify-between items-center py-3.5 first:pt-0 last:pb-0">
-                  <span className="text-sm font-medium text-[#111827]">{l}</span>
+                  <span className="text-sm font-medium text-[#1C2433]">{l}</span>
                   <Toggle
                     testid={`sec-${k}`}
                     checked={(sec as any)[k]}
@@ -872,8 +872,8 @@ export default function SettingsView() {
                 </div>
               ))}
             </div>
-            <div className="pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1">
-              <p className="font-semibold text-[#111827]">Active Login Sessions:</p>
+            <div className="pt-4 border-t border-slate-100 text-xs text-[#778196] space-y-1">
+              <p className="font-semibold text-[#1C2433]">Active Login Sessions:</p>
               <p>• Chrome on Windows (Current session) — IP 122.161.42.18</p>
               <p>• AetherX Mobile App (iPhone 15) — Active 14 mins ago</p>
             </div>
@@ -883,7 +883,7 @@ export default function SettingsView() {
         {tab === 'Data' && (
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold text-sm text-[#111827]">Workspace Data Management</h4>
+              <h4 className="font-semibold text-sm text-[#1C2433]">Workspace Data Management</h4>
               <p className="text-sm text-slate-600 mt-1">
                 All records are saved directly in your PostgreSQL / SQLite database store.
                 You can reset your organization back to initial clean state whenever required.

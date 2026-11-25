@@ -35,12 +35,12 @@ const futureIso = new Date(Date.now() + 864e5 * 2).toISOString().slice(0, 10);
 const TDEF = { status: 'Open', priority: 'Medium', due: futureIso };
 const TCOL: Record<string, string> = {
   Open: '#94A3B8',
-  'In Progress': '#F59E0B',
-  Completed: '#10B981',
-  Cancelled: '#EF4444',
+  'In Progress': '#E7A23A',
+  Completed: '#26A879',
+  Cancelled: '#E15B63',
   'To Do': '#94A3B8',
-  Review: '#8B5CF6',
-  Done: '#10B981',
+  Review: '#8B83F6',
+  Done: '#26A879',
 };
 
 function TodoList({ scope }: { scope: string }) {
@@ -148,8 +148,8 @@ function Planner() {
                         key={x.id}
                         className="rounded-lg px-3 py-2 text-sm bg-brand-soft border-l-2 border-brand"
                       >
-                        <span className="font-medium text-[#111827]">{x.title}</span>
-                        <span className="text-xs text-slate-500 ml-2">
+                        <span className="font-medium text-[#1C2433]">{x.title}</span>
+                        <span className="text-xs text-[#778196] ml-2">
                           {x.time} · {x.duration}m
                         </span>
                       </div>
@@ -168,10 +168,10 @@ function Planner() {
             tasks.map((t: any) => (
               <div key={t.id} className="text-sm">
                 <div className="flex justify-between gap-2">
-                  <span className="font-medium text-[#111827]">{t.title}</span>
+                  <span className="font-medium text-[#1C2433]">{t.title}</span>
                   <Badge>{t.priority}</Badge>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#778196] mt-0.5">
                   {t.assignee || 'Unassigned'} ·{' '}
                   {t.due < todayIso ? <span className="text-red-500 font-medium">overdue</span> : 'today'}
                 </p>
@@ -275,15 +275,15 @@ export function TasksView() {
               data-testid={`task-card-${t.id}`}
             >
               <div className="flex justify-between gap-2">
-                <p className="text-sm font-medium text-[#111827]">{t.title}</p>
+                <p className="text-sm font-medium text-[#1C2433]">{t.title}</p>
                 <Badge>{t.priority}</Badge>
               </div>
-              <p className="text-xs text-slate-500 mt-1">{t.related || 'General'}</p>
+              <p className="text-xs text-[#778196] mt-1">{t.related || 'General'}</p>
               <div className="flex justify-between items-center mt-3">
                 <span
                   className={cn(
                     'text-xs',
-                    t.due < todayIso && t.status !== 'Done' ? 'text-red-500 font-medium' : 'text-slate-500'
+                    t.due < todayIso && t.status !== 'Done' ? 'text-red-500 font-medium' : 'text-[#778196]'
                   )}
                 >
                   Due {fmtDate(t.due)}
@@ -313,7 +313,7 @@ export function TasksView() {
             {
               key: 'title',
               label: 'Task',
-              render: (t: any) => <span className="font-medium text-[#111827]">{t.title}</span>,
+              render: (t: any) => <span className="font-medium text-[#1C2433]">{t.title}</span>,
             },
             {
               key: 'assignee',
@@ -354,13 +354,13 @@ export function TasksView() {
                 <div className="flex items-center gap-3">
                   <Avatar name={e.name} color={e.color} />
                   <div>
-                    <p className="font-medium text-sm text-[#111827]">{e.name}</p>
-                    <p className="text-xs text-slate-500">{e.designation}</p>
+                    <p className="font-medium text-sm text-[#1C2433]">{e.name}</p>
+                    <p className="text-xs text-[#778196]">{e.designation}</p>
                   </div>
                 </div>
                 <div className="flex justify-between text-sm mt-4">
-                  <span className="text-slate-500">{n} assigned</span>
-                  <span className="font-medium text-[#111827]">{d} completed</span>
+                  <span className="text-[#778196]">{n} assigned</span>
+                  <span className="font-medium text-[#1C2433]">{d} completed</span>
                 </div>
                 <div className="h-1.5 bg-slate-100 rounded-full mt-2">
                   <div className="h-full bg-brand rounded-full" style={{ width: `${(d / n) * 100}%` }} />
@@ -447,7 +447,7 @@ export function RemindersView() {
               key: 'title',
               label: 'Reminder',
               render: (r: any) => (
-                <span className={cn('font-medium', r.done ? 'line-through text-slate-400' : 'text-[#111827]')}>
+                <span className={cn('font-medium', r.done ? 'line-through text-slate-400' : 'text-[#1C2433]')}>
                   {r.title}
                 </span>
               ),
@@ -477,7 +477,7 @@ export function RemindersView() {
                     Automated
                   </span>
                 ) : (
-                  <span className="text-xs text-slate-500">Manual</span>
+                  <span className="text-xs text-[#778196]">Manual</span>
                 ),
             },
             {
@@ -493,7 +493,7 @@ export function RemindersView() {
 
       {tab === 'Notification Centre' && (
         <Card data-testid="notification-centre">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-[#E5E7EB]">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-[#E1E5ED]">
             <Segmented testid="notif-filter" options={['All', 'Unread', 'Read']} value={nf} onChange={setNf} />
             <div className="flex gap-2">
               <Button
@@ -538,8 +538,8 @@ export function RemindersView() {
                   )}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#111827]">{n.title}</p>
-                  <p className="text-sm text-slate-500">{n.body}</p>
+                  <p className="text-sm font-medium text-[#1C2433]">{n.title}</p>
+                  <p className="text-sm text-[#778196]">{n.body}</p>
                   <p className="text-xs text-slate-400 mt-1">
                     {ago(n.time)} · {n.type}
                   </p>
@@ -566,8 +566,8 @@ export function RemindersView() {
           ].map(([k, t, d]: any) => (
             <div key={k} className="flex items-center justify-between gap-4 p-5">
               <div>
-                <p className="text-sm font-medium text-[#111827]">{t}</p>
-                <p className="text-sm text-slate-500">{d}</p>
+                <p className="text-sm font-medium text-[#1C2433]">{t}</p>
+                <p className="text-sm text-[#778196]">{d}</p>
               </div>
               <Toggle
                 testid={`rule-${k}`}
@@ -715,7 +715,7 @@ export function NotesView() {
                     </button>
                   </div>
                 </div>
-                <h3 className="font-semibold text-[15px] text-[#111827]">{n.title}</h3>
+                <h3 className="font-semibold text-[15px] text-[#1C2433]">{n.title}</h3>
                 {n.related && <p className="text-xs text-brand font-medium mt-0.5">{n.related}</p>}
                 <p className="text-sm text-slate-600 mt-2 line-clamp-4 leading-relaxed">{n.body}</p>
               </div>

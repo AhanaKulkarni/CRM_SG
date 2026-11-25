@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Sparkles, X, Send, Bot, Paperclip, ChevronRight, MessageSquare, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, X, Send } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { Avatar, cn } from './kit';
 
@@ -108,7 +109,7 @@ export function ChatPanel({
                 'max-w-[82%] rounded-2xl px-4 py-2.5 text-sm shadow-sm leading-relaxed whitespace-pre-wrap',
                 m.who === 'You'
                   ? 'bg-brand text-white rounded-br-none'
-                  : 'bg-white border border-[#E5E7EB] text-slate-800 rounded-bl-none'
+                  : 'bg-white border border-[#E1E5ED] text-slate-800 rounded-bl-none'
               )}
             >
               <div className="text-[10px] font-semibold tracking-wider uppercase mb-1 opacity-60">
@@ -149,20 +150,20 @@ export function ChatPanel({
           e.preventDefault();
           sendQuery(txt);
         }}
-        className="p-3 bg-white border-t border-[#E5E7EB] flex gap-2"
+        className="p-3 bg-[#F5F6FA] border-t border-[#E1E5ED] flex gap-2"
       >
         <input
           data-testid="ai-chat-input"
           value={txt}
           onChange={(e) => setTxt(e.target.value)}
           placeholder="Ask a question or type a command…"
-          className="flex-1 h-10 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand"
+          className="flex-1 h-10 rounded-xl neu-inset px-3.5 text-sm text-[#1C2433] placeholder:text-[#778196] outline-none"
         />
         <button
           type="submit"
           disabled={busy || !txt.trim()}
           data-testid="ai-chat-send"
-          className="h-10 px-4 rounded-lg bg-brand text-white flex items-center justify-center font-medium hover:opacity-90 disabled:opacity-40"
+          className="h-10 px-4 rounded-xl neu-btn-primary flex items-center justify-center font-medium disabled:opacity-40"
         >
           <Send className="w-4 h-4" />
         </button>
@@ -180,43 +181,53 @@ export function ChatWidget() {
       <button
         onClick={() => setOpen((o) => !o)}
         data-testid="chat-widget-toggle"
-        className="fixed bottom-20 sm:bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-brand text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-40 w-12 h-12 rounded-2xl neu-btn-primary flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
         title="AI Copilot"
+        aria-label="Toggle AI Copilot"
       >
         {open ? <X className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
       </button>
 
-      {open && (
-        <div
-          data-testid="chat-widget-window"
-          className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-40 w-[calc(100vw-32px)] sm:w-[380px] h-[520px] max-h-[80vh] rounded-2xl bg-white border border-[#E5E7EB] shadow-2xl flex flex-col overflow-hidden fade-up"
-        >
-          <div className="h-14 px-4 bg-[#111827] text-white flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold">{state.bot?.name || 'Nexa'} Copilot</p>
-                <p className="text-[10px] text-slate-400">Ask about leads, revenue & tasks</p>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            data-testid="chat-widget-window"
+            className="fixed bottom-36 lg:bottom-22 right-4 sm:right-6 z-40 w-[calc(100vw-32px)] sm:w-[390px] h-[520px] max-h-[75vh] rounded-2xl bg-[#F5F6FA] border border-white/80 shadow-2xl flex flex-col overflow-hidden"
+          >
+            <div className="h-14 px-4 bg-[#171C2C] text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-brand flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-4 h-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">{state.bot?.name || 'Nexa'} Copilot</p>
+                  <p className="text-[10px] text-slate-400">Ask about leads, calls & tasks</p>
+                </div>
               </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="Close Copilot"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <button onClick={() => setOpen(false)} className="p-1 rounded text-slate-400 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <ChatPanel
-            mode="team"
-            className="flex-1"
-            chips={[
-              'How many open leads do we have?',
-              'Which invoices are overdue?',
-              'What tasks are pending?',
-              'Book a demo',
-            ]}
-          />
-        </div>
-      )}
+            <ChatPanel
+              mode="team"
+              className="flex-1"
+              chips={[
+                'How many open leads do we have?',
+                'What tasks are pending?',
+                'Book a demo',
+              ]}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

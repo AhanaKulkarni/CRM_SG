@@ -36,6 +36,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { PlivoSettingsPanel } from '@/components/PlivoSettingsPanel';
 import {
   Card,
   CardHead,
@@ -135,7 +136,7 @@ function MetaTab() {
             </span>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm truncate">{t}</p>
-              <p className="text-xs text-slate-500 truncate">{s}</p>
+              <p className="text-xs text-[#778196] truncate">{s}</p>
             </div>
             <Badge tone="success">Connected</Badge>
           </Card>
@@ -184,7 +185,7 @@ function MetaTab() {
                   <Avatar name={l.name} size={32} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{l.name}</p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs text-[#778196] truncate">
                       {l.source} lead form · {l.city || 'India'}
                     </p>
                   </div>
@@ -199,15 +200,15 @@ function MetaTab() {
           <CardHead title="Meta campaign performance" />
           <div className="px-5 pb-5 space-y-4">
             {camps.length === 0 ? (
-              <p className="text-sm text-slate-500 py-6 text-center">
+              <p className="text-sm text-[#778196] py-6 text-center">
                 No Meta campaigns running currently.
               </p>
             ) : (
               camps.map((c: any) => (
                 <div key={c.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
                   <div className="flex justify-between text-sm">
-                    <span className="font-medium text-[#111827]">{c.name}</span>
-                    <span className="text-slate-500 text-xs">{c.channel}</span>
+                    <span className="font-medium text-[#1C2433]">{c.name}</span>
+                    <span className="text-[#778196] text-xs">{c.channel}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 mt-2 text-center">
                     {[
@@ -216,8 +217,8 @@ function MetaTab() {
                       ['CPL', c.leads > 0 ? inr(Math.round(c.spend / c.leads)) : inr(0)],
                     ].map(([k, v]) => (
                       <div key={k} className="rounded-lg bg-slate-50 py-2">
-                        <p className="text-sm font-semibold text-[#111827]">{v}</p>
-                        <p className="text-[11px] text-slate-500">{k}</p>
+                        <p className="text-sm font-semibold text-[#1C2433]">{v}</p>
+                        <p className="text-[11px] text-[#778196]">{k}</p>
                       </div>
                     ))}
                   </div>
@@ -326,7 +327,7 @@ function WebsiteTab() {
             {fields.map((f: any, i: number) => (
               <div
                 key={f.id}
-                className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 rounded-lg border border-[#E5E7EB] bg-white"
+                className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 rounded-lg border border-[#E1E5ED] bg-white"
               >
                 <input
                   className={cn(inputCls, 'flex-1 min-w-[120px]')}
@@ -354,7 +355,7 @@ function WebsiteTab() {
                     <option key={t}>{t}</option>
                   ))}
                 </select>
-                <label className="flex items-center gap-1.5 text-xs text-slate-500 whitespace-nowrap">
+                <label className="flex items-center gap-1.5 text-xs text-[#778196] whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={f.required}
@@ -399,9 +400,9 @@ function WebsiteTab() {
           </p>
           <form
             onSubmit={submit}
-            className="rounded-xl border border-[#E5E7EB] p-5 space-y-3 bg-slate-50/50"
+            className="rounded-xl border border-[#E1E5ED] p-5 space-y-3 bg-slate-50/50"
           >
-            <p className="font-semibold text-sm text-[#111827]">Talk to our team</p>
+            <p className="font-semibold text-sm text-[#1C2433]">Talk to our team</p>
             {fields.map((f: any) => (
               <label key={f.id} className="block">
                 <span className="text-xs text-slate-600 font-medium">
@@ -456,7 +457,7 @@ function WebsiteTab() {
             ['API key', key],
           ].map(([l, v]) => (
             <label key={l} className="block">
-              <span className="text-xs text-slate-500">{l}</span>
+              <span className="text-xs text-[#778196]">{l}</span>
               <div className="flex gap-2 mt-1">
                 <input readOnly className={cn(inputCls, 'font-mono text-xs')} value={v} />
                 <Button
@@ -471,7 +472,7 @@ function WebsiteTab() {
               </div>
             </label>
           ))}
-          <pre className="text-[11px] bg-[#111827] text-slate-300 rounded-lg p-3 overflow-x-auto leading-relaxed">
+          <pre className="text-[11px] bg-[#1C2433] text-slate-300 rounded-lg p-3 overflow-x-auto leading-relaxed">
             {`curl -X POST ${url} \\\n  -H "Authorization: Bearer ${key.slice(0, 12)}…" \\\n  -H "Content-Type: application/json" \\\n  -d '{"name":"Ravi Kumar","email":"ravi@acme.in","company":"Acme Corp"}'`}
           </pre>
           <div className="flex gap-2">
@@ -511,12 +512,12 @@ function WebsiteTab() {
               />
             ) : (
               (state.enquiries || []).map((e: any) => (
-                <div key={e.id} className="p-3 rounded-lg border border-[#E5E7EB]">
+                <div key={e.id} className="p-3 rounded-lg border border-[#E1E5ED]">
                   <div className="flex justify-between gap-2">
-                    <p className="text-sm font-medium text-[#111827]">{e.name}</p>
+                    <p className="text-sm font-medium text-[#1C2433]">{e.name}</p>
                     <span className="text-xs text-slate-400">{ago(e.time)}</span>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#778196]">
                     {e.email || 'No email'} · {e.page || '/contact'} · {e.utm || 'direct'}
                   </p>
                   <p className="text-sm text-slate-600 mt-1">{e.message}</p>
@@ -598,8 +599,8 @@ function DevicesTab() {
               className={cn(
                 'bg-white overflow-hidden shadow-xl transition-[width] duration-500 max-w-full',
                 dev === 'Mobile'
-                  ? 'rounded-[32px] border-[8px] border-[#111827]'
-                  : 'rounded-lg border border-[#E5E7EB]'
+                  ? 'rounded-[32px] border-[8px] border-[#1C2433]'
+                  : 'rounded-lg border border-[#E1E5ED]'
               )}
               style={{ width: w[dev] }}
             >
@@ -626,7 +627,7 @@ function DevicesTab() {
                 key={k}
                 className="flex items-center justify-between py-2.5 border-t border-slate-100 first:border-0"
               >
-                <span className="text-sm text-[#111827]">{l}</span>
+                <span className="text-sm text-[#1C2433]">{l}</span>
                 <Toggle
                   testid={`sync-${k}`}
                   checked={sync[k]}
@@ -707,7 +708,7 @@ export default function IntegrationsView() {
 
       <Tabs
         testid="integration-tabs"
-        tabs={['All Integrations', 'Meta', 'Website', 'Mobile & Web']}
+        tabs={['All Integrations', 'Plivo Telephony', 'Meta', 'Website', 'Mobile & Web']}
         value={tab}
         onChange={setTab}
       />
@@ -737,8 +738,8 @@ export default function IntegrationsView() {
                       }}
                     />
                   </div>
-                  <p className="font-semibold text-base mt-4 text-[#111827]">{n}</p>
-                  <p className="text-sm text-slate-500 mt-1">{d}</p>
+                  <p className="font-semibold text-base mt-4 text-[#1C2433]">{n}</p>
+                  <p className="text-sm text-[#778196] mt-1">{d}</p>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                     <Badge tone={on ? 'success' : 'neutral'}>
                       {on ? 'Connected' : 'Not connected'}
@@ -759,6 +760,7 @@ export default function IntegrationsView() {
         </div>
       )}
 
+      {tab === 'Plivo Telephony' && <PlivoSettingsPanel />}
       {tab === 'Meta' && <MetaTab />}
       {tab === 'Website' && <WebsiteTab />}
       {tab === 'Mobile & Web' && <DevicesTab />}

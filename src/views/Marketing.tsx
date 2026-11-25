@@ -158,7 +158,7 @@ export default function MarketingView() {
                       style={{ background: SOURCE_COLORS[i % SOURCE_COLORS.length] }}
                     />
                     <span className="flex-1 text-slate-600 truncate">{x.name}</span>
-                    <span className="font-semibold text-[#111827]">{x.value}</span>
+                    <span className="font-semibold text-[#1C2433]">{x.value}</span>
                   </div>
                 ))}
               </div>
@@ -203,8 +203,8 @@ export default function MarketingView() {
             label: 'Campaign',
             render: (x: any) => (
               <div>
-                <p className="font-semibold text-[#111827]">{x.name}</p>
-                <p className="text-xs text-slate-500">
+                <p className="font-semibold text-[#1C2433]">{x.name}</p>
+                <p className="text-xs text-[#778196]">
                   {fmtDate(x.start)} – {fmtDate(x.end)}
                 </p>
               </div>
@@ -256,7 +256,7 @@ export default function MarketingView() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                 <th className="px-5 py-2.5 font-medium">Source</th>
                 <th className="px-5 py-2.5 font-medium">Leads</th>
                 <th className="px-5 py-2.5 font-medium">Won</th>
@@ -267,7 +267,7 @@ export default function MarketingView() {
             <tbody>
               {srcRows.map((r) => (
                 <tr key={r.s} className="border-t border-slate-100">
-                  <td className="px-5 py-3 font-semibold text-[#111827]">{r.s}</td>
+                  <td className="px-5 py-3 font-semibold text-[#1C2433]">{r.s}</td>
                   <td className="px-5 py-3 text-slate-700">{r.n}</td>
                   <td className="px-5 py-3 text-slate-700">{r.won}</td>
                   <td className="px-5 py-3 w-48">
@@ -275,10 +275,10 @@ export default function MarketingView() {
                       <div className="flex-1">
                         <Progress value={r.rate} />
                       </div>
-                      <span className="text-xs font-semibold w-8 text-[#111827]">{r.rate}%</span>
+                      <span className="text-xs font-semibold w-8 text-[#1C2433]">{r.rate}%</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-right font-medium text-[#111827]">{inr(r.value)}</td>
+                  <td className="px-5 py-3 text-right font-medium text-[#1C2433]">{inr(r.value)}</td>
                 </tr>
               ))}
             </tbody>

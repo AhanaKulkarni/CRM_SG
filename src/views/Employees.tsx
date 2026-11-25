@@ -192,8 +192,8 @@ export default function EmployeesView() {
                   <div className="flex items-center gap-3">
                     <Avatar name={e.name} size={44} color={e.color} />
                     <div className="min-w-0">
-                      <p className="font-semibold truncate text-[#111827]">{e.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{e.designation}</p>
+                      <p className="font-semibold truncate text-[#1C2433]">{e.name}</p>
+                      <p className="text-xs text-[#778196] truncate">{e.designation}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-4">
@@ -203,8 +203,8 @@ export default function EmployeesView() {
                   </div>
                   <div className="mt-4">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-500">Performance</span>
-                      <span className="font-medium text-[#111827]">{e.score || 80}</span>
+                      <span className="text-[#778196]">Performance</span>
+                      <span className="font-medium text-[#1C2433]">{e.score || 80}</span>
                     </div>
                     <Progress value={e.score || 80} color={e.color} />
                   </div>
@@ -229,7 +229,7 @@ export default function EmployeesView() {
             leadsHandled: 0,
             dealsWon: 0,
             joined: todayIso,
-            color: '#6366F1',
+            color: '#6965ED',
           }}
           searchKeys={['name', 'email', 'designation']}
           filters={[
@@ -243,7 +243,7 @@ export default function EmployeesView() {
               render: (e: any) => (
                 <span className="flex items-center gap-2">
                   <Avatar name={e.name} size={26} color={e.color} />
-                  <span className="font-medium text-[#111827]">{e.name}</span>
+                  <span className="font-medium text-[#1C2433]">{e.name}</span>
                 </span>
               ),
             },
@@ -260,7 +260,7 @@ export default function EmployeesView() {
         <Card className="overflow-x-auto" data-testid="permissions-matrix">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                 <th className="px-5 py-3 font-medium">Role</th>
                 {PERMS.map((p) => (
                   <th key={p} className="px-4 py-3 text-center font-medium">
@@ -273,7 +273,7 @@ export default function EmployeesView() {
             <tbody>
               {ROLES.map((r) => (
                 <tr key={r} className="border-t border-slate-100">
-                  <td className="px-5 py-3 font-medium text-[#111827]">{r}</td>
+                  <td className="px-5 py-3 font-medium text-[#1C2433]">{r}</td>
                   {PERMS.map((p) => {
                     const on = (permissions[r] || []).includes(p);
                     return (
@@ -294,7 +294,7 @@ export default function EmployeesView() {
                       </td>
                     );
                   })}
-                  <td className="px-4 py-3 text-slate-500 font-medium">
+                  <td className="px-4 py-3 text-[#778196] font-medium">
                     {employees.filter((e: any) => e.role === r).length}
                   </td>
                 </tr>
@@ -313,7 +313,7 @@ export default function EmployeesView() {
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+                <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                   <th className="px-5 py-3 font-medium">Employee</th>
                   {week.map((d) => (
                     <th key={d.toISOString()} className="px-3 py-3 text-center font-medium">
@@ -329,7 +329,7 @@ export default function EmployeesView() {
                     <td className="px-5 py-2.5">
                       <span className="flex items-center gap-2">
                         <Avatar name={e.name} size={24} color={e.color} />
-                        <span className="font-medium text-[#111827]">{e.name}</span>
+                        <span className="font-medium text-[#1C2433]">{e.name}</span>
                       </span>
                     </td>
                     {week.map((d, j) => {
@@ -354,7 +354,7 @@ export default function EmployeesView() {
                         </td>
                       );
                     })}
-                    <td className="px-4 py-2.5 font-medium text-right tabular-nums text-[#111827]">
+                    <td className="px-4 py-2.5 font-medium text-right tabular-nums text-[#1C2433]">
                       {e.attendance || 95}%
                     </td>
                   </tr>
@@ -391,7 +391,7 @@ export default function EmployeesView() {
                   <YAxis tick={CHART.axis} axisLine={false} tickLine={false} />
                   <Tooltip {...CHART.tooltip} />
                   <Bar dataKey="Leads" fill="var(--brand)" radius={[4, 4, 0, 0]} name="Leads" />
-                  <Bar dataKey="Deals" fill="#10B981" radius={[4, 4, 0, 0]} name="Deals Won" />
+                  <Bar dataKey="Deals" fill="#26A879" radius={[4, 4, 0, 0]} name="Deals Won" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -405,8 +405,8 @@ export default function EmployeesView() {
             <div className="flex items-center gap-4">
               <Avatar name={prof.name} size={60} color={prof.color} />
               <div>
-                <p className="text-lg font-semibold text-[#111827]">{prof.name}</p>
-                <p className="text-sm text-slate-500">
+                <p className="text-lg font-semibold text-[#1C2433]">{prof.name}</p>
+                <p className="text-sm text-[#778196]">
                   {prof.designation} · {prof.dept}
                 </p>
                 <div className="flex gap-1.5 mt-1.5">
@@ -435,8 +435,8 @@ export default function EmployeesView() {
                 ['Deals', prof.dealsWon || 0],
               ].map(([l, v]: any) => (
                 <div key={l} className="rounded-lg bg-slate-50 p-3">
-                  <p className="font-semibold text-[#111827]">{v}</p>
-                  <p className="text-[11px] text-slate-500">{l}</p>
+                  <p className="font-semibold text-[#1C2433]">{v}</p>
+                  <p className="text-[11px] text-[#778196]">{l}</p>
                 </div>
               ))}
             </div>
@@ -461,7 +461,7 @@ export default function EmployeesView() {
             leadsHandled: 0,
             dealsWon: 0,
             joined: todayIso,
-            color: '#6366F1',
+            color: '#6965ED',
             ...v,
           });
           toast.success('Employee added');
@@ -478,28 +478,28 @@ export default function EmployeesView() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#111827] mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-[#1C2433] mb-1">Full Name</label>
             <input
-              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand transition-colors"
+              className="w-full h-9 rounded-lg border border-[#E1E5ED] px-3 text-sm outline-none focus:border-brand transition-colors"
               placeholder="e.g. Rahul Sharma"
               value={userForm.name}
               onChange={(e) => setUserForm((f) => ({ ...f, name: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#111827] mb-1">Email</label>
+            <label className="block text-sm font-medium text-[#1C2433] mb-1">Email</label>
             <input
               type="email"
-              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand transition-colors"
+              className="w-full h-9 rounded-lg border border-[#E1E5ED] px-3 text-sm outline-none focus:border-brand transition-colors"
               placeholder="rahul@yourcompany.com"
               value={userForm.email}
               onChange={(e) => setUserForm((f) => ({ ...f, email: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#111827] mb-1">Role</label>
+            <label className="block text-sm font-medium text-[#1C2433] mb-1">Role</label>
             <select
-              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand bg-white transition-colors"
+              className="w-full h-9 rounded-lg border border-[#E1E5ED] px-3 text-sm outline-none focus:border-brand bg-white transition-colors"
               value={userForm.role}
               onChange={(e) => setUserForm((f) => ({ ...f, role: e.target.value }))}
             >
@@ -508,20 +508,20 @@ export default function EmployeesView() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#111827] mb-1">Designation</label>
+            <label className="block text-sm font-medium text-[#1C2433] mb-1">Designation</label>
             <input
-              className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-brand transition-colors"
+              className="w-full h-9 rounded-lg border border-[#E1E5ED] px-3 text-sm outline-none focus:border-brand transition-colors"
               placeholder="e.g. Telecaller, Sales Executive"
               value={userForm.designation}
               onChange={(e) => setUserForm((f) => ({ ...f, designation: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#111827] mb-1">Password</label>
+            <label className="block text-sm font-medium text-[#1C2433] mb-1">Password</label>
             <div className="relative">
               <input
                 type={showPw ? 'text' : 'password'}
-                className="w-full h-9 rounded-lg border border-[#E5E7EB] px-3 pr-10 text-sm outline-none focus:border-brand transition-colors"
+                className="w-full h-9 rounded-lg border border-[#E1E5ED] px-3 pr-10 text-sm outline-none focus:border-brand transition-colors"
                 placeholder="Minimum 4 characters"
                 value={userForm.password}
                 onChange={(e) => setUserForm((f) => ({ ...f, password: e.target.value }))}

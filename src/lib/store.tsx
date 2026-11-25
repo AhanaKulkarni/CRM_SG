@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { MotionConfig } from 'framer-motion';
 
 const Ctx = createContext<any>(null);
 
@@ -90,8 +91,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (state.brand) {
       const b = state.brand;
       const root = document.documentElement;
-      root.style.setProperty('--brand', b.primary || '#6366F1');
-      root.style.setProperty('--brand2', b.secondary || '#8B5CF6');
+      root.style.setProperty('--brand', b.primary || '#6965ED');
+      root.style.setProperty('--brand2', b.secondary || '#8B83F6');
       document.title = `${b.name || 'AetherX'} · Business Platform`;
     }
   }, [state.brand]);
@@ -217,7 +218,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
   }, [state, loading]);
 
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  return (
+    <MotionConfig reducedMotion="user">
+      <Ctx.Provider value={api}>{children}</Ctx.Provider>
+    </MotionConfig>
+  );
 }
 
 export const useStore = () => {

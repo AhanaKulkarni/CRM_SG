@@ -286,7 +286,7 @@ export default function ReportsView() {
           value={preset}
           onChange={setRange}
         />
-        <label className="text-xs text-slate-500">
+        <label className="text-xs text-[#778196]">
           From
           <input
             type="date"
@@ -299,7 +299,7 @@ export default function ReportsView() {
             }}
           />
         </label>
-        <label className="text-xs text-slate-500">
+        <label className="text-xs text-[#778196]">
           To
           <input
             type="date"
@@ -312,7 +312,7 @@ export default function ReportsView() {
             }}
           />
         </label>
-        <label className="text-xs text-slate-500">
+        <label className="text-xs text-[#778196]">
           Filter by Caller {isCaller && '(My View)'}
           <select
             data-testid="report-caller-filter"
@@ -423,7 +423,7 @@ export default function ReportsView() {
                 <Bar dataKey="CallsAttempted" fill="#94A3B8" name="Calls Attempted" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="CallsConnected" fill="var(--brand)" name="Connected" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Interested" fill="var(--brand2)" name="Interested" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Converted" fill="#10B981" name="Converted" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Converted" fill="#26A879" name="Converted" radius={[4, 4, 0, 0]} />
               </BarChart>
             ) : tab === 'Revenue' ? (
               <AreaChart data={rows}>
@@ -468,7 +468,7 @@ export default function ReportsView() {
                 <Tooltip {...CHART.tooltip} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line yAxisId="l" dataKey="NewCustomers" stroke="var(--brand)" strokeWidth={2} />
-                <Line yAxisId="r" dataKey="CAC" stroke="#F59E0B" strokeWidth={2} />
+                <Line yAxisId="r" dataKey="CAC" stroke="#E7A23A" strokeWidth={2} />
               </LineChart>
             ) : (
               <BarChart data={rows}>
@@ -504,7 +504,7 @@ export default function ReportsView() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/70 border-b border-slate-100">
+              <tr className="text-left text-[11px] uppercase tracking-wider text-[#778196] bg-slate-50/70 border-b border-slate-100">
                 {Object.keys(rows[0] || {}).map((k) => (
                   <th key={k} className="px-5 py-3 font-semibold">
                     {k}

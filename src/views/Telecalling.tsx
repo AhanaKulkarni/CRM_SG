@@ -15,17 +15,20 @@ import {
   Phone,
   PhoneOff,
   PhoneCall,
+  PhoneIncoming,
   Clock,
   Mic,
   MicOff,
   Pause,
+  Play,
   Users,
   CheckCircle2,
-  Play,
-  Volume2,
   Download,
   AlertCircle,
   Radio,
+  Volume2,
+  ShieldCheck,
+  FileDown,
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { FIELDS, TECHNICAL_RESULTS, SALES_DISPOSITIONS } from '@/lib/fields';
@@ -45,13 +48,15 @@ import {
   Tabs,
   Empty,
   fmtDate,
+  downloadCSV,
 } from '@/components/kit';
+import { PlivoSettingsPanel } from '@/components/PlivoSettingsPanel';
 
 export const dur = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
 const todayIso = new Date().toISOString().slice(0, 10);
 const future2Days = new Date(Date.now() + 864e5 * 2).toISOString().slice(0, 10);
 
-// Generates an audible telephone wave recording for reliable in-browser playback
 function createPlayableCallRecording(durationSeconds: number): string {
   if (typeof window === 'undefined') return '';
   try {
@@ -70,7 +75,7 @@ function createPlayableCallRecording(durationSeconds: number): string {
     writeString(8, 'WAVE');
     writeString(12, 'fmt ');
     view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true); // PCM
+    view.setUint16(20, 1, true);
     view.setUint16(22, numChannels, true);
     view.setUint32(24, sampleRate, true);
     view.setUint32(28, sampleRate * 2, true);
@@ -99,31 +104,63 @@ function createPlayableCallRecording(durationSeconds: number): string {
   }
 }
 
-function Dialer() {
+const DISPOSITION_OPTIONS = [
+  'Interested',
+  'Callback',
+  'Not Interested',
+  'No Answer',
+  'Converted',
+  'Do Not Call',
+];
+
+function Dialer({ selectedLeadId, onSelectLead }: { selectedLeadId?: string; onSelectLead?: (id: string) => void }) {
   const store = useStore();
   const { state } = store;
   const isCaller = state.session?.role === 'Caller';
-  const currentUser = state.session?.name;
+  const currentUser = state.session?.name || 'Agent';
 
-  // Callers can only dial their own assigned leads; Admins can dial all
   const rawLeads = state.leads || [];
   const leads = isCaller
     ? rawLeads.filter((l: any) => l.owner === currentUser || !l.owner)
     : rawLeads;
 
-  const [sel, setSel] = useState<string>(leads[0]?.id || '');
+  const [sel, setSel] = useState<string>(selectedLeadId || leads[0]?.id || '');
   const [live, setLive] = useState(false);
+  const [callState, setCallState] = useState<'Idle' | 'Connecting' | 'Ringing' | 'Connected' | 'On Hold'>('Idle');
   const [sec, setSec] = useState(0);
   const [mute, setMute] = useState(false);
+  const [hold, setHold] = useState(false);
   const [wrap, setWrap] = useState(false);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string>('');
+  const [recordConsent, setRecordConsent] = useState(false);
+
+  // Disposition form states
   const [techResult, setTechResult] = useState<string>('Answered/Connected');
   const [salesDisp, setSalesDisp] = useState<string>('Interested');
   const [fu, setFu] = useState(future2Days);
+  const [fuTime, setFuTime] = useState('11:00');
   const [notes, setNotes] = useState('');
+  const [assignedEmp, setAssignedEmp] = useState(currentUser);
+
+  // Plivo Browser SDK states
+  const plivoClientRef = useRef<any>(null);
+  const [sdkReady, setSdkReady] = useState(false);
+  const [sdkStatus, setSdkStatus] = useState<'checking' | 'registered' | 'unconfigured' | 'error'>('checking');
+  const [sdkIdentity, setSdkIdentity] = useState<string>('');
+  const [sdkError, setSdkError] = useState<string>('');
+  const [incomingCall, setIncomingCall] = useState<any>(null);
+  const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
+  const [selectedMic, setSelectedMic] = useState<string>('');
+  const [activeCallUuid, setActiveCallUuid] = useState<string>('');
 
   const lead = leads.find((l: any) => l.id === sel) || leads[0];
   const isDNC = lead?.dnc || lead?.status === 'Do Not Call';
+
+  useEffect(() => {
+    if (selectedLeadId && selectedLeadId !== sel) {
+      setSel(selectedLeadId);
+    }
+  }, [selectedLeadId, sel]);
 
   useEffect(() => {
     if (!sel && leads[0]?.id) {
@@ -132,42 +169,262 @@ function Dialer() {
   }, [leads, sel]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRecordConsent(localStorage.getItem('aetherx_plivo_recording') === 'true');
+      navigator.mediaDevices
+        ?.enumerateDevices()
+        .then((devs) => {
+          const mics = devs.filter((d) => d.kind === 'audioinput');
+          setAudioInputs(mics);
+          if (mics[0]?.deviceId) setSelectedMic(mics[0].deviceId);
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  // Initialize official Plivo Browser SDK using server-provisioned JWT AccessToken
+  useEffect(() => {
+    let mounted = true;
+
+    async function initPlivoSdk() {
+      try {
+        const res = await fetch('/api/plivo/token', { method: 'POST' });
+        if (!res.ok) {
+          if (mounted) {
+            setSdkStatus('unconfigured');
+          }
+          return;
+        }
+        const data = await res.json();
+        if (!data.configured || !data.token) {
+          if (mounted) setSdkStatus('unconfigured');
+          return;
+        }
+
+        const PlivoMod: any = await import('plivo-browser-sdk');
+        const Plivo: any = PlivoMod.default || PlivoMod;
+        if (!mounted) return;
+
+        const plivoBrowser = new Plivo({
+          debug: 'OFF',
+          permOnClick: true,
+          enableTracking: true,
+          closeProtection: true,
+          enableNoiseReduction: false,
+        });
+
+        const client = plivoBrowser.client;
+        plivoClientRef.current = client;
+
+        client.on('onLogin', () => {
+          if (!mounted) return;
+          setSdkReady(true);
+          setSdkStatus('registered');
+          setSdkIdentity(data.username);
+        });
+
+        client.on('onLoginFailed', (reason: any) => {
+          if (!mounted) return;
+          setSdkStatus('error');
+          setSdkError(String(reason || 'Plivo login failed'));
+        });
+
+        client.on('onCallRemoteRinging', () => {
+          if (mounted) setCallState('Ringing');
+        });
+
+        client.on('onCallAnswered', (callInfo: any) => {
+          if (!mounted) return;
+          setCallState('Connected');
+          setLive(true);
+          if (callInfo?.callUUID) setActiveCallUuid(callInfo.callUUID);
+        });
+
+        client.on('onCallTerminated', () => {
+          if (!mounted) return;
+          setLive(false);
+          setCallState('Idle');
+          setMute(false);
+          setHold(false);
+          setWrap(true);
+        });
+
+        client.on('onCallFailed', (reason: any) => {
+          if (!mounted) return;
+          setLive(false);
+          setCallState('Idle');
+          toast.error('Call failed', { description: String(reason || 'Unable to connect') });
+        });
+
+        client.on('onIncomingCall', (callerName: string, extraInfo: any) => {
+          if (!mounted) return;
+          setIncomingCall({ callerName, extraInfo });
+          toast('Incoming call', { description: `From ${callerName || 'Customer'}` });
+        });
+
+        client.loginWithAccessToken(data.token);
+      } catch (err: any) {
+        if (mounted) {
+          setSdkStatus('unconfigured');
+          setSdkError(err?.message || '');
+        }
+      }
+    }
+
+    initPlivoSdk();
+    return () => {
+      mounted = false;
+      try {
+        plivoClientRef.current?.logout?.();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!live) return undefined;
     const t = setInterval(() => setSec((s) => s + 1), 1000);
     return () => clearInterval(t);
   }, [live]);
 
-  const save = () => {
-    if (!lead) return;
-    const finalRecordingUrl = recordedAudioUrl || (sec > 0 ? createPlayableCallRecording(sec) : '');
-    store.add('calls', {
-      contact: lead.name,
-      company: lead.company,
-      phone: lead.phone,
-      agent: currentUser || 'Agent',
-      direction: 'Outbound',
-      technicalResult: techResult,
-      disposition: salesDisp,
-      duration: Math.max(sec, 1),
-      date: todayIso,
-      followUp: ['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) ? fu : '',
-      recordingUrl: finalRecordingUrl,
-      notes,
-    });
+  const startCall = async () => {
+    if (isDNC || !lead) return;
+    if (!lead.phone) {
+      toast.error('No phone number on this lead');
+      return;
+    }
 
-    if (['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp)) {
-      store.add('reminders', {
-        title: `Follow-up call with ${lead.name} (${lead.company})`,
-        type: 'Follow-up',
-        due: fu,
-        time: '11:00',
-        owner: lead.owner || currentUser,
-        done: false,
-        auto: true,
+    setSec(0);
+    setRecordedAudioUrl('');
+    setMute(false);
+    setHold(false);
+    setActiveCallUuid('');
+
+    if (sdkReady && plivoClientRef.current) {
+      try {
+        if (selectedMic && plivoClientRef.current.audio?.microphoneDevices) {
+          plivoClientRef.current.audio.microphoneDevices.set(selectedMic);
+        }
+        setCallState('Connecting');
+        setLive(true);
+        const dest = lead.phone.replace(/\s+/g, '');
+        plivoClientRef.current.call(dest, {
+          'X-PH-Agent': currentUser,
+          'X-PH-LeadId': lead.id,
+          'X-PH-Record': recordConsent ? 'true' : 'false',
+        });
+        toast(`Calling ${lead.name} via Plivo…`, {
+          description: recordConsent ? 'Recording notice enabled' : 'Outbound WebRTC session initiated',
+        });
+        return;
+      } catch (err: any) {
+        toast.error('Plivo WebRTC error', { description: err?.message || 'Falling back to local dialer' });
+      }
+    }
+
+    // Local CRM dialer mode when Plivo server keys are not configured yet
+    setCallState('Connected');
+    setLive(true);
+    toast(`Calling ${lead.name}…`, {
+      description: 'Local CRM dialer session active (configure Plivo env vars for live PSTN)',
+    });
+  };
+
+  const endCall = () => {
+    if (sdkReady && plivoClientRef.current) {
+      try {
+        plivoClientRef.current.hangup();
+      } catch {
+        // ignore
+      }
+    }
+    setLive(false);
+    setCallState('Idle');
+    const generated = recordConsent ? createPlayableCallRecording(Math.max(sec, 5)) : '';
+    setRecordedAudioUrl(generated);
+    setWrap(true);
+  };
+
+  const toggleMute = () => {
+    const next = !mute;
+    setMute(next);
+    if (sdkReady && plivoClientRef.current) {
+      try {
+        if (next) plivoClientRef.current.mute();
+        else plivoClientRef.current.unmute();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const toggleHold = () => {
+    const next = !hold;
+    setHold(next);
+    setCallState(next ? 'On Hold' : 'Connected');
+    if (sdkReady && plivoClientRef.current) {
+      try {
+        if (next && plivoClientRef.current.hold) plivoClientRef.current.hold();
+        else if (!next && plivoClientRef.current.unhold) plivoClientRef.current.unhold();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const saveDisposition = async () => {
+    if (!lead) return;
+    const normalizedDisp = salesDisp === 'Callback' ? 'Call Back Required' : salesDisp;
+    const finalRecordingUrl = recordedAudioUrl || '';
+
+    // Prevent duplicate call log if webhook already created one for this CallUUID
+    const existingByUuid = activeCallUuid
+      ? (state.calls || []).find((c: any) => c.providerCallId === activeCallUuid)
+      : null;
+
+    if (existingByUuid) {
+      await store.update('calls', existingByUuid.id, {
+        technicalResult: techResult,
+        disposition: normalizedDisp,
+        duration: Math.max(sec, existingByUuid.duration || 1),
+        followUp: ['Interested', 'Callback', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) ? fu : '',
+        followUpTime: fuTime,
+        agent: assignedEmp || currentUser,
+        notes,
+      });
+    } else {
+      await store.add('calls', {
+        providerCallId: activeCallUuid || `crm-${Date.now()}`,
+        contact: lead.name,
+        company: lead.company,
+        phone: lead.phone,
+        agent: assignedEmp || currentUser,
+        direction: 'Outbound',
+        technicalResult: techResult,
+        disposition: normalizedDisp,
+        duration: Math.max(sec, 1),
+        date: todayIso,
+        followUp: ['Interested', 'Callback', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) ? fu : '',
+        followUpTime: fuTime,
+        recordingUrl: finalRecordingUrl,
+        notes,
       });
     }
 
-    // Lead stage update per Rulebook Section 2.5
+    if (['Interested', 'Callback', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp)) {
+      await store.add('reminders', {
+        title: `Follow-up call with ${lead.name} (${lead.company})`,
+        type: 'Follow-up',
+        due: fu,
+        time: fuTime || '11:00',
+        owner: assignedEmp || lead.owner || currentUser,
+        done: false,
+        auto: true,
+        related: lead.company,
+      });
+    }
+
     let newStatus = lead.status;
     let newDnc = lead.dnc || false;
     if (salesDisp === 'Do Not Call') {
@@ -175,39 +432,40 @@ function Dialer() {
       newDnc = true;
     } else if (salesDisp === 'Converted') {
       newStatus = 'Converted';
-    } else if (['Interested', 'Follow-up Scheduled'].includes(salesDisp)) {
-      newStatus = salesDisp;
-    } else if (salesDisp === 'Call Back Required') {
+    } else if (salesDisp === 'Interested') {
+      newStatus = 'Interested';
+    } else if (salesDisp === 'Callback') {
       newStatus = 'Follow-up Scheduled';
     } else if (salesDisp === 'Not Interested') {
       newStatus = 'Not Interested';
-    } else if (['No Answer', 'Busy'].includes(techResult) && lead.status === 'New') {
+    } else if (salesDisp === 'No Answer' && lead.status === 'New') {
       newStatus = 'Attempted';
     } else if (techResult === 'Answered/Connected' && ['New', 'Assigned', 'Attempted'].includes(lead.status)) {
       newStatus = 'Contacted';
     }
 
-    store.update('leads', lead.id, {
+    await store.update('leads', lead.id, {
       status: newStatus,
       dnc: newDnc,
       lastCalled: todayIso,
     });
 
-    store.log(currentUser || 'You', 'logged a call with', `${lead.company} (${salesDisp})`, 'call');
-    toast.success('Call logged', {
-      description: `${techResult} · ${salesDisp}${['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) ? ' · follow-up scheduled' : ''}`,
+    await store.log(assignedEmp || currentUser, 'logged a call with', `${lead.company} (${salesDisp})`, 'call');
+    toast.success('Call disposition saved', {
+      description: `${techResult} · ${salesDisp}`,
     });
 
     setWrap(false);
     setSec(0);
     setRecordedAudioUrl('');
     setNotes('');
+    setActiveCallUuid('');
   };
 
   if (!lead) {
     return (
       <Card className="p-5" data-testid="dialer">
-        <h3 className="font-semibold text-[15px] mb-4 text-[#111827]">Click-to-call</h3>
+        <h3 className="font-semibold text-[15px] mb-4 text-[#1C2433]">Click-to-call</h3>
         <Empty
           title="No contacts available"
           text="Add leads to your pipeline to initiate calls from the dialer."
@@ -217,52 +475,142 @@ function Dialer() {
   }
 
   return (
-    <Card className="p-5" data-testid="dialer">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-[15px] text-[#111827]">Click-to-call</h3>
-        {isDNC && (
-          <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
-            DNC Restricted
-          </span>
-        )}
+    <Card className="p-5 space-y-4" data-testid="dialer">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h3 className="font-semibold text-[15px] text-[#1C2433]">Browser Dialer</h3>
+          <p className="text-[11px] text-[#778196]">
+            {sdkStatus === 'registered'
+              ? `Plivo SDK: ${sdkIdentity}`
+              : sdkStatus === 'checking'
+              ? 'Checking Plivo WebRTC…'
+              : 'Local CRM Dialer (Plivo keys pending)'}
+          </p>
+        </div>
+        <Badge tone={sdkStatus === 'registered' ? 'success' : isDNC ? 'danger' : 'neutral'}>
+          {isDNC ? 'DNC Restricted' : sdkStatus === 'registered' ? 'Plivo Ready' : 'Standby'}
+        </Badge>
       </div>
 
+      {/* Incoming Call Alert */}
+      {incomingCall && (
+        <div className="p-3 rounded-xl bg-[#26A879]/12 border border-[#26A879]/30 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <PhoneIncoming className="w-4 h-4 text-[#26A879] animate-pulse shrink-0" />
+            <span className="text-xs font-semibold text-[#1C2433] truncate">
+              Incoming: {incomingCall.callerName || 'Caller'}
+            </span>
+          </div>
+          <div className="flex gap-1.5 shrink-0">
+            <Button
+              size="sm"
+              onClick={() => {
+                plivoClientRef.current?.answer?.();
+                setIncomingCall(null);
+                setLive(true);
+                setCallState('Connected');
+              }}
+            >
+              Answer
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => {
+                plivoClientRef.current?.reject?.();
+                setIncomingCall(null);
+              }}
+            >
+              Reject
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Selector */}
       <select
         data-testid="dialer-contact-select"
         disabled={live}
         className={inputCls}
         value={sel}
-        onChange={(e) => setSel(e.target.value)}
+        onChange={(e) => {
+          setSel(e.target.value);
+          onSelectLead?.(e.target.value);
+        }}
       >
-        {leads.slice(0, 30).map((l: any) => (
+        {leads.slice(0, 40).map((l: any) => (
           <option key={l.id} value={l.id}>
             {l.name} · {l.company} {l.dnc ? '(DNC)' : ''}
           </option>
         ))}
       </select>
 
-      <div className="mt-5 rounded-xl bg-[#111827] text-white p-5 text-center grain relative overflow-hidden">
+      {/* Audio Device & Recording Consent Controls */}
+      <div className="grid grid-cols-1 gap-2">
+        {audioInputs.length > 0 && (
+          <select
+            aria-label="Microphone device"
+            disabled={live}
+            value={selectedMic}
+            onChange={(e) => setSelectedMic(e.target.value)}
+            className="w-full h-9 rounded-xl neu-inset px-3 text-xs text-[#1C2433] outline-none"
+          >
+            {audioInputs.map((m, idx) => (
+              <option key={m.deviceId || idx} value={m.deviceId}>
+                Mic: {m.label || `Microphone ${idx + 1}`}
+              </option>
+            ))}
+          </select>
+        )}
+        <label className="flex items-center justify-between px-3 py-2 rounded-xl neu-surface text-xs cursor-pointer">
+          <span className="flex items-center gap-1.5 text-[#1C2433] font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-brand" />
+            Record with consent notice
+          </span>
+          <input
+            type="checkbox"
+            disabled={live}
+            checked={recordConsent}
+            onChange={(e) => {
+              setRecordConsent(e.target.checked);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('aetherx_plivo_recording', String(e.target.checked));
+              }
+            }}
+            className="rounded accent-[#6965ED]"
+          />
+        </label>
+      </div>
+
+      {/* Neumorphic Dark Call Console */}
+      <div className="rounded-2xl bg-[#171C2C] text-white p-5 text-center grain relative overflow-hidden shadow-lg">
         <Avatar name={lead.name} size={56} />
-        <p className="mt-3 font-semibold text-lg">{lead.name}</p>
-        <p className="text-xs text-slate-400">
+        <p className="mt-3 font-semibold text-base sm:text-lg truncate">{lead.name}</p>
+        <p className="text-xs text-slate-400 truncate">
           {lead.company} · {lead.phone || 'No phone number'}
         </p>
+        <p className="text-[11px] text-slate-400 mt-0.5">Agent: {currentUser}</p>
 
         {isDNC ? (
-          <div className="mt-4 p-2.5 bg-red-950/70 border border-red-800 rounded-lg text-xs text-red-300 flex items-center justify-center gap-1.5">
+          <div className="mt-4 p-2.5 bg-red-950/70 border border-red-800 rounded-xl text-xs text-red-300 flex items-center justify-center gap-1.5">
             <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-            <span>DO NOT CALL: This lead has opted out of outbound communications.</span>
+            <span>DO NOT CALL: Opted out of outbound calls.</span>
           </div>
         ) : (
-          <p
-            className={cn(
-              'mt-3 text-2xl font-mono tabular-nums font-bold tracking-wider',
-              live ? 'text-emerald-400' : 'text-slate-500'
+          <div className="mt-3">
+            <p
+              className={cn(
+                'text-2xl font-mono tabular-nums font-bold tracking-wider',
+                live ? 'text-[#26A879]' : 'text-slate-400'
+              )}
+              data-testid="dialer-timer"
+            >
+              {live ? dur(sec) : 'Ready'}
+            </p>
+            {live && (
+              <p className="text-[11px] uppercase tracking-wider text-slate-400 mt-0.5">{callState}</p>
             )}
-            data-testid="dialer-timer"
-          >
-            {live ? dur(sec) : 'Ready'}
-          </p>
+          </div>
         )}
 
         <div className="flex justify-center gap-3 mt-4">
@@ -270,30 +618,32 @@ function Dialer() {
             <>
               <button
                 type="button"
-                onClick={() => setMute(!mute)}
-                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                onClick={toggleMute}
+                className={cn(
+                  'w-11 h-11 rounded-full flex items-center justify-center transition-colors',
+                  mute ? 'bg-[#E15B63] text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+                )}
                 title={mute ? 'Unmute' : 'Mute'}
               >
-                {mute ? <MicOff className="w-4 h-4 text-red-400" /> : <Mic className="w-4 h-4" />}
+                {mute ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>
               <button
                 type="button"
-                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-                title="Hold"
+                onClick={toggleHold}
+                className={cn(
+                  'w-11 h-11 rounded-full flex items-center justify-center transition-colors',
+                  hold ? 'bg-[#E7A23A] text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+                )}
+                title={hold ? 'Resume' : 'Hold'}
               >
-                <Pause className="w-4 h-4" />
+                {hold ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               </button>
               <button
                 type="button"
                 data-testid="dialer-end-btn"
-                onClick={() => {
-                  setLive(false);
-                  const generated = createPlayableCallRecording(Math.max(sec, 5));
-                  setRecordedAudioUrl(generated);
-                  setWrap(true);
-                }}
-                className="w-11 h-11 rounded-full bg-[#EF4444] flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
-                title="End Call"
+                onClick={endCall}
+                className="w-11 h-11 rounded-full bg-[#E15B63] flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                title="Hang Up"
               >
                 <PhoneOff className="w-4 h-4 text-white" />
               </button>
@@ -303,18 +653,12 @@ function Dialer() {
               type="button"
               disabled={isDNC}
               data-testid="dialer-call-btn"
-              onClick={() => {
-                if (isDNC) return;
-                setSec(0);
-                setRecordedAudioUrl('');
-                setLive(true);
-                toast(`Calling ${lead.name}…`, { description: 'Outbound session initiated' });
-              }}
+              onClick={startCall}
               className={cn(
-                'w-14 h-14 rounded-full flex items-center justify-center transition-colors shadow-lg',
+                'w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg',
                 isDNC
                   ? 'bg-slate-700 cursor-not-allowed opacity-50'
-                  : 'bg-[#10B981] pulse-ring hover:bg-emerald-600'
+                  : 'bg-[#26A879] pulse-ring hover:brightness-110 active:scale-95'
               )}
               title={isDNC ? 'Do Not Call active' : 'Call'}
             >
@@ -322,27 +666,31 @@ function Dialer() {
             </button>
           )}
         </div>
+        {sdkError && sdkStatus === 'error' && (
+          <p className="mt-3 text-[11px] text-[#E7A23A] truncate">{sdkError}</p>
+        )}
       </div>
 
+      {/* Disposition Modal */}
       <Modal
         open={wrap}
         onClose={() => setWrap(false)}
         title="Call disposition & outcome"
-        description={`Call with ${lead.name} · ${dur(sec)} duration`}
+        description={`${lead.name} (${lead.company}) · ${dur(sec)} duration`}
         testid="disposition-modal"
       >
         <div className="space-y-4">
           {recordedAudioUrl && (
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <div className="p-3 rounded-xl neu-surface">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-                  Call Recording Captured ({dur(sec)})
+                <span className="text-xs font-semibold text-[#1C2433] flex items-center gap-1.5">
+                  <Radio className="w-3.5 h-3.5 text-[#26A879] animate-pulse" />
+                  Call Recording ({dur(sec)})
                 </span>
                 <a
                   href={recordedAudioUrl}
                   download={`call_${(lead.phone || lead.name).replace(/\s+/g, '_')}_${todayIso}.wav`}
-                  className="text-[11px] font-medium text-brand hover:underline flex items-center gap-1"
+                  className="text-[11px] font-semibold text-brand hover:underline flex items-center gap-1"
                 >
                   <Download className="w-3 h-3" /> Download .wav
                 </a>
@@ -351,22 +699,19 @@ function Dialer() {
             </div>
           )}
 
-          {/* Section 1: Technical Call Result */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              1. Technical Call Result (Provider)
+            <label className="block text-xs font-semibold text-[#778196] uppercase tracking-wider mb-1.5">
+              1. Technical Call Result
             </label>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {TECHNICAL_RESULTS.map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setTechResult(r)}
                   className={cn(
-                    'h-9 px-2 rounded-lg border text-xs font-medium transition-colors truncate',
-                    techResult === r
-                      ? 'border-brand bg-brand-soft text-[#111827] ring-1 ring-brand font-semibold'
-                      : 'border-[#E5E7EB] hover:bg-slate-50 text-slate-700'
+                    'h-9 px-2 rounded-xl text-xs font-medium transition-all truncate',
+                    techResult === r ? 'neu-btn-primary' : 'neu-btn text-[#1C2433]'
                   )}
                 >
                   {r}
@@ -375,24 +720,24 @@ function Dialer() {
             </div>
           </div>
 
-          {/* Section 2: Sales Disposition */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              2. Sales Disposition (Caller Outcome)
+            <label className="block text-xs font-semibold text-[#778196] uppercase tracking-wider mb-1.5">
+              2. Sales Disposition
             </label>
             <div className="grid grid-cols-2 gap-1.5">
-              {SALES_DISPOSITIONS.map((d) => (
+              {DISPOSITION_OPTIONS.map((d) => (
                 <button
                   key={d}
                   type="button"
                   data-testid={`disp-${d.toLowerCase().replace(/[\s/]/g, '-')}`}
                   onClick={() => setSalesDisp(d)}
                   className={cn(
-                    'h-9 px-2 rounded-lg border text-xs font-medium transition-colors truncate',
+                    'h-9 px-2 rounded-xl text-xs font-medium transition-all truncate',
                     salesDisp === d
-                      ? 'border-brand bg-brand-soft text-[#111827] ring-1 ring-brand font-semibold'
-                      : 'border-[#E5E7EB] hover:bg-slate-50 text-slate-700',
-                    d === 'Do Not Call' && salesDisp === d && 'border-red-500 bg-red-50 text-red-900 ring-red-500'
+                      ? d === 'Do Not Call'
+                        ? 'bg-[#E15B63] text-white shadow-sm'
+                        : 'neu-btn-primary'
+                      : 'neu-btn text-[#1C2433]'
                   )}
                 >
                   {d}
@@ -401,35 +746,61 @@ function Dialer() {
             </div>
           </div>
 
-          {['Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(salesDisp) && (
-            <label className="block pt-1">
-              <span className="text-xs font-medium text-slate-700">Schedule follow-up date</span>
-              <input
-                type="date"
-                className={`${inputCls} mt-1`}
-                value={fu}
-                onChange={(e) => setFu(e.target.value)}
-                data-testid="followup-date"
-              />
-            </label>
+          {['Interested', 'Callback'].includes(salesDisp) && (
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <label className="block">
+                <span className="text-xs font-semibold text-[#778196]">Follow-up date</span>
+                <input
+                  type="date"
+                  className={`${inputCls} mt-1`}
+                  value={fu}
+                  onChange={(e) => setFu(e.target.value)}
+                  data-testid="followup-date"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-[#778196]">Follow-up time</span>
+                <input
+                  type="time"
+                  className={`${inputCls} mt-1`}
+                  value={fuTime}
+                  onChange={(e) => setFuTime(e.target.value)}
+                />
+              </label>
+            </div>
           )}
 
+          <label className="block">
+            <span className="text-xs font-semibold text-[#778196]">Assigned employee</span>
+            <select
+              className={`${inputCls} mt-1`}
+              value={assignedEmp}
+              onChange={(e) => setAssignedEmp(e.target.value)}
+            >
+              {(state.employees || []).map((e: any) => (
+                <option key={e.id || e.name} value={e.name}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
           {salesDisp === 'Do Not Call' && (
-            <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
-              Note: Marking as Do Not Call will suppress all future outbound calls and mark this lead as DNC in the database.
+            <div className="p-2.5 bg-[#E15B63]/10 border border-[#E15B63]/30 rounded-xl text-xs text-[#E15B63]">
+              Marking as Do Not Call will suppress all future outbound calls to this contact.
             </div>
           )}
 
           <textarea
-            className={`${inputCls} h-20 py-2`}
-            placeholder="Call notes & key conversation takeaways…"
+            className={`${inputCls} h-20 py-2.5`}
+            placeholder="Call notes & next steps…"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             data-testid="call-notes"
           />
 
-          <Button onClick={save} data-testid="save-call-btn" className="w-full">
-            Save call log
+          <Button onClick={saveDisposition} data-testid="save-call-btn" className="w-full">
+            Save call log & update CRM
           </Button>
         </div>
       </Modal>
@@ -441,30 +812,26 @@ export function TelecallingView() {
   const { state } = useStore();
   const [tab, setTab] = useState('Call Logs');
   const [fuFilter, setFuFilter] = useState<'All' | 'Overdue' | 'Today' | 'Upcoming'>('All');
+  const [selectedLeadId, setSelectedLeadId] = useState<string>('');
 
   const isCaller = state.session?.role === 'Caller';
   const currentUser = state.session?.name;
 
-  // Caller rule: view only own call history
   const allCalls = state.calls || [];
-  const calls = isCaller
-    ? allCalls.filter((c: any) => c.agent === currentUser)
-    : allCalls;
+  const calls = isCaller ? allCalls.filter((c: any) => c.agent === currentUser) : allCalls;
 
   const rawLeads = state.leads || [];
-  const leads = isCaller
-    ? rawLeads.filter((l: any) => l.owner === currentUser || !l.owner)
-    : rawLeads;
+  const leads = isCaller ? rawLeads.filter((l: any) => l.owner === currentUser || !l.owner) : rawLeads;
 
   const callsToday = calls.filter((c: any) => c.date === todayIso).length;
   const avgDurationSec =
     calls.length > 0 ? Math.round(calls.reduce((a: number, c: any) => a + Number(c.duration || 0), 0) / calls.length) : 0;
-  const connectedCalls = calls.filter((c: any) =>
-    c.technicalResult === 'Answered/Connected' || (!c.technicalResult && c.disposition !== 'No Answer')
+  const connectedCalls = calls.filter(
+    (c: any) => c.technicalResult === 'Answered/Connected' || (!c.technicalResult && c.disposition !== 'No Answer')
   ).length;
   const connectRate = calls.length > 0 ? `${Math.round((connectedCalls / calls.length) * 100)}%` : '0%';
   const positiveOutcomes = calls.filter((c: any) =>
-    ['Converted', 'Interested', 'Call Back Required', 'Follow-up Scheduled'].includes(c.disposition)
+    ['Converted', 'Interested', 'Call Back Required', 'Callback', 'Follow-up Scheduled'].includes(c.disposition)
   ).length;
 
   const agents = [...new Set(calls.map((c: any) => c.agent).filter(Boolean))].map((a: any) => {
@@ -478,7 +845,6 @@ export function TelecallingView() {
     };
   });
 
-  // Filtered follow-up calls
   const allFollowUps = calls.filter((c: any) => Boolean(c.followUp));
   const followUps = allFollowUps.filter((c: any) => {
     if (fuFilter === 'Overdue') return c.followUp < todayIso;
@@ -487,36 +853,47 @@ export function TelecallingView() {
     return true;
   });
 
+  const tabsList = isCaller
+    ? ['Call Logs', 'Recordings', 'Follow-ups', 'Contacts']
+    : ['Call Logs', 'Recordings', 'Follow-ups', 'Contacts', 'Plivo Config'];
+
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         title="Telecalling"
-        subtitle="Manage outbound campaigns, call logs and agent performance."
+        subtitle="Browser-based Plivo calling, call recordings, dispositions and agent performance."
+        actions={
+          <Button
+            variant="secondary"
+            onClick={() => downloadCSV('aetherx-call-logs', calls)}
+            data-testid="export-calls-csv"
+          >
+            <FileDown className="w-4 h-4" />
+            Export CSV
+          </Button>
+        }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 stagger">
-        <Stat label="Calls today" value={callsToday.toString()} icon={PhoneCall} />
-        <Stat label="Avg. duration" value={dur(avgDurationSec)} icon={Clock} />
-        <Stat label="Connect rate" value={connectRate} icon={Users} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 stagger">
+        <Stat label="Calls Today" value={callsToday.toString()} icon={PhoneCall} />
+        <Stat label="Average Duration" value={dur(avgDurationSec)} icon={Clock} />
+        <Stat label="Connect Rate" value={connectRate} icon={Users} />
         <Stat
-          label="Positive outcomes"
+          label="Positive Outcomes"
           value={positiveOutcomes.toString()}
           icon={CheckCircle2}
           hint="interested + converted"
         />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 mb-4">
-        <Dialer />
+      <div className="grid lg:grid-cols-3 gap-4">
+        <Dialer selectedLeadId={selectedLeadId} onSelectLead={setSelectedLeadId} />
 
-        <Card className="lg:col-span-2" data-testid="agent-performance">
+        <Card variant="clean" className="lg:col-span-2" data-testid="agent-performance">
           <CardHead title="Agent performance" sub="Calls handled and talk time (min)" />
           {agents.length === 0 ? (
             <div className="h-64 flex items-center justify-center">
-              <Empty
-                title="No calls logged yet"
-                text="Use the click-to-call dialer to log outbound calls."
-              />
+              <Empty title="No calls logged yet" text="Use the browser dialer to place and log outbound calls." />
             </div>
           ) : (
             <>
@@ -527,18 +904,18 @@ export function TelecallingView() {
                     <XAxis dataKey="name" tick={CHART.axis} axisLine={false} tickLine={false} />
                     <YAxis tick={CHART.axis} axisLine={false} tickLine={false} />
                     <Tooltip {...CHART.tooltip} />
-                    <Bar dataKey="calls" fill="var(--brand)" radius={[4, 4, 0, 0]} name="Calls" />
-                    <Bar dataKey="talk" fill="var(--brand2)" radius={[4, 4, 0, 0]} name="Talk time (min)" />
+                    <Bar dataKey="calls" fill="var(--brand)" radius={[6, 6, 0, 0]} name="Calls" />
+                    <Bar dataKey="talk" fill="var(--brand2)" radius={[6, 6, 0, 0]} name="Talk time (min)" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-5 pt-2 border-t border-slate-100">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-5 pt-2 border-t border-[#E1E5ED]">
                 {agents.slice(0, 4).map((a) => (
                   <div key={a.full} className="flex items-center gap-2">
                     <Avatar name={a.full} size={28} />
                     <div className="min-w-0">
-                      <p className="text-xs font-medium truncate text-[#111827]">{a.full}</p>
-                      <p className="text-[11px] text-slate-500">{a.conv} positive</p>
+                      <p className="text-xs font-semibold truncate text-[#1C2433]">{a.full}</p>
+                      <p className="text-[11px] text-[#778196]">{a.conv} positive</p>
                     </div>
                   </div>
                 ))}
@@ -548,12 +925,7 @@ export function TelecallingView() {
         </Card>
       </div>
 
-      <Tabs
-        testid="tele-tabs"
-        tabs={['Call Logs', 'Recordings', 'Follow-ups', 'Contacts']}
-        value={tab}
-        onChange={setTab}
-      />
+      <Tabs testid="tele-tabs" tabs={tabsList} value={tab} onChange={setTab} />
 
       {tab === 'Call Logs' && (
         <CrudTable
@@ -583,12 +955,10 @@ export function TelecallingView() {
               render: (c: any) => (
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <p className="font-medium text-[#111827]">{c.contact}</p>
-                    {c.disposition === 'Do Not Call' && (
-                      <span className="text-[10px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-bold">DNC</span>
-                    )}
+                    <p className="font-semibold text-[#1C2433]">{c.contact}</p>
+                    <Badge tone={c.direction === 'Inbound' ? 'info' : 'neutral'}>{c.direction || 'Outbound'}</Badge>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#778196]">
                     {c.company} · {c.phone}
                   </p>
                 </div>
@@ -597,40 +967,13 @@ export function TelecallingView() {
             { key: 'agent', label: 'Agent' },
             {
               key: 'technicalResult',
-              label: 'Technical Result',
-              render: (c: any) => (
-                <span
-                  className={cn(
-                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
-                    c.technicalResult === 'Answered/Connected'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : ['Busy', 'No Answer'].includes(c.technicalResult)
-                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                      : 'bg-slate-100 text-slate-600'
-                  )}
-                >
-                  {c.technicalResult || 'Connected'}
-                </span>
-              ),
+              label: 'Call Status',
+              render: (c: any) => <Badge>{c.technicalResult || 'Connected'}</Badge>,
             },
             {
               key: 'disposition',
-              label: 'Sales Disposition',
-              render: (c: any) => (
-                <span
-                  className={cn(
-                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold',
-                    c.disposition === 'Converted' && 'bg-emerald-100 text-emerald-800',
-                    c.disposition === 'Interested' && 'bg-indigo-50 text-indigo-700 border border-indigo-200',
-                    ['Call Back Required', 'Follow-up Scheduled'].includes(c.disposition) &&
-                      'bg-purple-50 text-purple-700 border border-purple-200',
-                    c.disposition === 'Do Not Call' && 'bg-red-100 text-red-800 font-bold',
-                    c.disposition === 'Not Interested' && 'bg-slate-100 text-slate-600'
-                  )}
-                >
-                  {c.disposition}
-                </span>
-              ),
+              label: 'Disposition',
+              render: (c: any) => <Badge>{c.disposition}</Badge>,
             },
             {
               key: 'duration',
@@ -647,16 +990,14 @@ export function TelecallingView() {
                     <a
                       href={c.recordingUrl}
                       download={`call_${c.contact || 'lead'}_${c.date || todayIso}.wav`}
-                      title="Download audio recording"
-                      className="text-slate-500 hover:text-brand p-1 rounded hover:bg-slate-100"
+                      title="Download recording"
+                      className="text-[#778196] hover:text-brand p-1 rounded"
                     >
                       <Download className="w-3.5 h-3.5" />
                     </a>
                   </div>
                 ) : (
-                  <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded" title="Audio processing or recording not captured">
-                    Unavailable
-                  </span>
+                  <span className="text-[11px] text-[#778196] bg-[#EEF1F6] px-2 py-0.5 rounded-lg">Not recorded</span>
                 ),
             },
             { key: 'date', label: 'Date', render: (c: any) => fmtDate(c.date) },
@@ -671,24 +1012,24 @@ export function TelecallingView() {
 
       {tab === 'Recordings' && (
         <div className="space-y-4">
-          <div className="p-4 bg-white border border-[#E5E7EB] rounded-xl flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h4 className="text-sm font-semibold text-[#111827]">Call Recordings Library</h4>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Listen, review and download customer telephone recordings. In-browser audio playback supported.
-              </p>
+          <Card className="p-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Volume2 className="w-5 h-5 text-brand shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-[#1C2433]">Authorised Call Recordings</h4>
+                <p className="text-xs text-[#778196] mt-0.5">
+                  Calls are recorded only when enabled with disclosure notice. Callers may access only their own calls.
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-600" />
-                Live Recording Enabled
-              </span>
-            </div>
-          </div>
+            <Badge tone="success">Consent Notice Active</Badge>
+          </Card>
 
           <CrudTable
             testid="recordings"
-            rows={calls.filter((c: any) => Boolean(c.recordingUrl) || Number(c.duration) > 0)}
+            canAdd={false}
+            entity="Recording"
+            rows={calls.filter((c: any) => Boolean(c.recordingUrl))}
             searchKeys={['contact', 'company', 'agent', 'phone', 'notes']}
             columns={[
               {
@@ -696,8 +1037,10 @@ export function TelecallingView() {
                 label: 'Customer / Lead',
                 render: (c: any) => (
                   <div>
-                    <p className="font-medium text-[#111827]">{c.contact}</p>
-                    <p className="text-xs text-slate-500">{c.company} · {c.phone}</p>
+                    <p className="font-semibold text-[#1C2433]">{c.contact}</p>
+                    <p className="text-xs text-[#778196]">
+                      {c.company} · {c.phone}
+                    </p>
                   </div>
                 ),
               },
@@ -705,11 +1048,7 @@ export function TelecallingView() {
               {
                 key: 'disposition',
                 label: 'Outcome',
-                render: (c: any) => (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                    {c.disposition || 'Completed'}
-                  </span>
-                ),
+                render: (c: any) => <Badge>{c.disposition || 'Completed'}</Badge>,
               },
               {
                 key: 'duration',
@@ -719,23 +1058,19 @@ export function TelecallingView() {
               {
                 key: 'audio',
                 label: 'Audio Player',
-                render: (c: any) => {
-                  const audioSrc = c.recordingUrl || createPlayableCallRecording(Number(c.duration) || 10);
-                  return (
-                    <div className="flex items-center gap-2">
-                      <audio src={audioSrc} controls className="h-8 w-48 sm:w-60" />
-                      <a
-                        href={audioSrc}
-                        download={`call_${c.contact || 'lead'}_${c.date || todayIso}.wav`}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded transition-colors"
-                        title="Download audio recording"
-                      >
-                        <Download className="w-3 h-3" />
-                        <span className="hidden sm:inline">.wav</span>
-                      </a>
-                    </div>
-                  );
-                },
+                render: (c: any) => (
+                  <div className="flex items-center gap-2">
+                    <audio src={c.recordingUrl} controls className="h-8 w-44 sm:w-56" />
+                    <a
+                      href={c.recordingUrl}
+                      download={`call_${c.contact || 'lead'}_${c.date || todayIso}.wav`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#1C2433] neu-btn rounded-xl"
+                      title="Download recording"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                ),
               },
               { key: 'date', label: 'Date', render: (c: any) => fmtDate(c.date) },
             ]}
@@ -745,17 +1080,15 @@ export function TelecallingView() {
 
       {tab === 'Follow-ups' && (
         <div className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {(['All', 'Overdue', 'Today', 'Upcoming'] as const).map((filter) => (
               <button
                 key={filter}
                 type="button"
                 onClick={() => setFuFilter(filter)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                  fuFilter === filter
-                    ? 'bg-[#111827] text-white shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  'px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all',
+                  fuFilter === filter ? 'neu-btn-primary' : 'neu-btn text-[#778196]'
                 )}
               >
                 {filter} {filter === 'Overdue' && `(${allFollowUps.filter((c: any) => c.followUp < todayIso).length})`}
@@ -765,6 +1098,8 @@ export function TelecallingView() {
 
           <CrudTable
             testid="followups"
+            canAdd={false}
+            entity="Follow-up"
             rows={followUps}
             searchKeys={['contact', 'company', 'agent', 'notes']}
             columns={[
@@ -780,9 +1115,9 @@ export function TelecallingView() {
                   return (
                     <span
                       className={cn(
-                        'font-medium text-xs',
-                        isOver && 'text-red-600 font-semibold',
-                        isTod && 'text-amber-600 font-semibold'
+                        'font-semibold text-xs',
+                        isOver && 'text-[#E15B63]',
+                        isTod && 'text-[#E7A23A]'
                       )}
                     >
                       {fmtDate(c.followUp)} {isOver && '(Overdue)'} {isTod && '(Due today)'}
@@ -799,8 +1134,25 @@ export function TelecallingView() {
       {tab === 'Contacts' && (
         <CrudTable
           testid="tele-contacts"
+          canAdd={false}
+          entity="Contact"
           rows={leads}
           searchKeys={['name', 'company', 'phone', 'owner']}
+          rowActions={(l: any) => (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={l.dnc || l.status === 'Do Not Call'}
+              onClick={() => {
+                setSelectedLeadId(l.id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="mr-1"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              Dial
+            </Button>
+          )}
           columns={[
             {
               key: 'name',
@@ -808,10 +1160,8 @@ export function TelecallingView() {
               render: (l: any) => (
                 <span className="flex items-center gap-2">
                   <Avatar name={l.name} size={24} />
-                  <span className="font-medium text-[#111827]">{l.name}</span>
-                  {(l.dnc || l.status === 'Do Not Call') && (
-                    <span className="text-[10px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-bold">DNC</span>
-                  )}
+                  <span className="font-semibold text-[#1C2433]">{l.name}</span>
+                  {(l.dnc || l.status === 'Do Not Call') && <Badge tone="danger">DNC</Badge>}
                 </span>
               ),
             },
@@ -822,6 +1172,8 @@ export function TelecallingView() {
           ]}
         />
       )}
+
+      {tab === 'Plivo Config' && !isCaller && <PlivoSettingsPanel />}
     </div>
   );
 }

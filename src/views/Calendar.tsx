@@ -11,10 +11,10 @@ const iso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const TYPE_C: Record<string, string> = {
-  Meeting: '#6366F1',
-  Call: '#10B981',
-  Demo: '#8B5CF6',
-  Internal: '#F59E0B',
+  Meeting: '#6965ED',
+  Call: '#26A879',
+  Demo: '#8B83F6',
+  Internal: '#E7A23A',
 };
 
 function EventChip({ e, onClick }: any) {
@@ -26,7 +26,7 @@ function EventChip({ e, onClick }: any) {
       }}
       data-testid={`event-${e.id}`}
       className="w-full text-left truncate rounded px-1.5 py-0.5 text-[11px] font-medium text-white hover:opacity-90 shadow-sm transition-opacity"
-      style={{ background: TYPE_C[e.type] || '#6366F1' }}
+      style={{ background: TYPE_C[e.type] || '#6965ED' }}
     >
       {e.time} {e.title}
     </button>
@@ -106,40 +106,70 @@ export default function CalendarView() {
         }
       />
 
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-3 p-4 border-b border-[#E5E7EB]">
-          <div className="flex items-center gap-1">
+      <Card variant="clean" className="overflow-hidden">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-4 border-b border-[#E1E5ED] bg-[#F5F6FA]/70">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => shift(-1)}
-              className="p-1.5 rounded-md hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-xl neu-btn text-[#1C2433]"
               data-testid="calendar-prev"
+              aria-label="Previous"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => shift(1)}
-              className="p-1.5 rounded-md hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-xl neu-btn text-[#1C2433]"
               data-testid="calendar-next"
+              aria-label="Next"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <h2 className="font-semibold text-[#111827]" data-testid="calendar-label">
+          <h2 className="font-semibold text-[#1C2433] text-sm sm:text-base" data-testid="calendar-label">
             {label}
           </h2>
           <Button size="sm" variant="secondary" onClick={() => setCur(new Date())}>
             Today
           </Button>
-          <div className="ml-auto">
+          <div className="ml-auto hidden sm:block">
             <Segmented testid="calendar-view" options={['Month', 'Week', 'Day']} value={view} onChange={setView} />
           </div>
         </div>
 
-        {/* Month View */}
+        {/* Mobile Compact Week Strip + Agenda */}
+        <div className="sm:hidden p-4 space-y-4">
+          <div className="grid grid-cols-7 gap-1.5">
+            {weekDays.map((d) => {
+              const k = iso(d);
+              const isSelected = k === iso(cur);
+              const hasEv = evOn(k).length > 0;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setCur(d)}
+                  className={cn(
+                    'flex flex-col items-center py-2 rounded-xl text-xs transition-all',
+                    isSelected ? 'neu-btn-primary text-white font-semibold' : 'neu-surface text-[#1C2433]'
+                  )}
+                >
+                  <span className={cn('text-[10px] uppercase', isSelected ? 'text-white/80' : 'text-[#778196]')}>
+                    {d.toLocaleDateString('en-IN', { weekday: 'narrow' })}
+                  </span>
+                  <span className="mt-0.5 text-sm">{d.getDate()}</span>
+                  <span className={cn('w-1.5 h-1.5 rounded-full mt-1', hasEv ? (isSelected ? 'bg-white' : 'bg-brand') : 'bg-transparent')} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Desktop Month View */}
         {view === 'Month' && (
-          <div className="overflow-x-auto">
+          <div className="hidden sm:block overflow-x-auto">
             <div className="min-w-[700px]">
-              <div className="grid grid-cols-7 text-[11px] uppercase tracking-wider text-slate-500 border-b border-[#E5E7EB] bg-slate-50/50">
+              <div className="grid grid-cols-7 text-[11px] uppercase tracking-wider text-[#778196] border-b border-[#E1E5ED] bg-slate-50/50">
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
                   <div key={d} className="px-3 py-2 font-medium">
                     {d}
@@ -179,7 +209,7 @@ export default function CalendarView() {
                           <EventChip key={e.id} e={e} onClick={setEdit} />
                         ))}
                         {evs.length > 3 && (
-                          <p className="text-[10px] text-slate-500 px-1">+{evs.length - 3} more</p>
+                          <p className="text-[10px] text-[#778196] px-1">+{evs.length - 3} more</p>
                         )}
                       </div>
                     </div>
@@ -192,10 +222,10 @@ export default function CalendarView() {
 
         {/* Week / Day View */}
         {view !== 'Month' && (
-          <div className="overflow-x-auto">
+          <div className="hidden sm:block overflow-x-auto">
             <div className={view === 'Week' ? 'min-w-[760px]' : ''}>
               <div
-                className="grid border-b border-[#E5E7EB] bg-slate-50/50"
+                className="grid border-b border-[#E1E5ED] bg-slate-50/50"
                 style={{ gridTemplateColumns: `64px repeat(${view === 'Week' ? 7 : 1}, 1fr)` }}
               >
                 <div />
@@ -241,7 +271,7 @@ export default function CalendarView() {
       </Card>
 
       {/* Event type legend */}
-      <div className="flex flex-wrap gap-4 mt-3 text-xs text-slate-500">
+      <div className="flex flex-wrap gap-4 mt-3 text-xs text-[#778196]">
         {Object.entries(TYPE_C).map(([k, c]) => (
           <span key={k} className="flex items-center gap-1.5 font-medium">
             <span className="w-2.5 h-2.5 rounded-sm" style={{ background: c }} />
@@ -251,28 +281,33 @@ export default function CalendarView() {
       </div>
 
       {/* Selected Date Agenda for Mobile Users */}
-      <div className="sm:hidden mt-6">
-        <h3 className="font-semibold text-sm text-[#111827] mb-2">
-          Agenda · {cur.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-        </h3>
+      <div className="sm:hidden mt-4">
+        <div className="flex items-center justify-between mb-2.5">
+          <h3 className="font-semibold text-sm text-[#1C2433]">
+            Agenda · {cur.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
+          </h3>
+          <Button size="sm" variant="secondary" onClick={() => create(iso(cur))}>
+            <Plus className="w-3.5 h-3.5" /> Add
+          </Button>
+        </div>
         {selectedDayEvents.length === 0 ? (
-          <Card className="p-4">
-            <p className="text-xs text-slate-400 text-center">No meetings on this day.</p>
+          <Card className="p-5">
+            <p className="text-xs text-[#778196] text-center">No meetings scheduled for this day.</p>
           </Card>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {selectedDayEvents.map((e: any) => (
               <Card
                 key={e.id}
-                className="p-3 border-l-4 cursor-pointer"
-                style={{ borderLeftColor: TYPE_C[e.type] || '#6366F1' }}
+                className="p-3.5 border-l-4 cursor-pointer active:scale-[0.99] transition-transform"
+                style={{ borderLeftColor: TYPE_C[e.type] || '#6965ED' }}
                 onClick={() => setEdit(e)}
               >
-                <div className="flex justify-between items-start">
-                  <p className="font-semibold text-sm text-[#111827]">{e.title}</p>
-                  <span className="text-xs text-slate-400">{e.type}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <p className="font-semibold text-sm text-[#1C2433]">{e.title}</p>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-[#EEF1F6] text-[#778196]">{e.type}</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-[#778196] mt-1">
                   {e.time} ({e.duration} min) · With {e.withPerson}
                 </p>
               </Card>
