@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Pencil, Trash2, Inbox, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
@@ -278,6 +279,12 @@ export function Segmented({ options, value, onChange, testid }: any) {
 }
 
 export function Modal({ open, onClose, title, description, children, footer, wide, testid }: any) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -287,7 +294,9 @@ export function Modal({ open, onClose, title, description, children, footer, wid
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -295,7 +304,7 @@ export function Modal({ open, onClose, title, description, children, footer, wid
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#171C2C]/45 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-[#171C2C]/45 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
@@ -304,13 +313,13 @@ export function Modal({ open, onClose, title, description, children, footer, wid
             exit={{ opacity: 0, y: 14, scale: 0.98 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              'bg-[#F5F6FA] border border-white/80 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-h-[92vh] flex flex-col overflow-hidden pb-safe',
+              'bg-[#F5F6FA] border border-white/80 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-h-[90vh] flex flex-col overflow-hidden pb-safe',
               wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'
             )}
             data-testid={testid}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 sm:px-6 pt-5 pb-3.5 border-b border-[#E1E5ED]">
+            <div className="flex items-center justify-between px-5 sm:px-6 pt-5 pb-3.5 border-b border-[#E1E5ED] shrink-0">
               <div className="min-w-0 pr-4">
                 <h3 className="text-base sm:text-lg font-semibold text-[#1C2433] truncate">{title}</h3>
                 {description && <p className="text-xs text-[#778196] mt-0.5">{description}</p>}
@@ -326,14 +335,15 @@ export function Modal({ open, onClose, title, description, children, footer, wid
             </div>
             <div className="p-5 sm:p-6 overflow-y-auto space-y-4 thin-scroll">{children}</div>
             {footer && (
-              <div className="px-5 sm:px-6 py-4 bg-[#EEF1F6]/70 border-t border-[#E1E5ED] flex justify-end gap-2">
+              <div className="px-5 sm:px-6 py-4 bg-[#EEF1F6]/70 border-t border-[#E1E5ED] flex justify-end gap-2 shrink-0">
                 {footer}
               </div>
             )}
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
