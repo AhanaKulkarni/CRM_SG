@@ -64,6 +64,7 @@ interface PlivoStatusResponse {
 export function PlivoSettingsPanel() {
   const [status, setStatus] = useState<PlivoStatusResponse | null>(null);
   const [testing, setTesting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [recordingEnabled, setRecordingEnabled] = useState(false);
   const [origin, setOrigin] = useState('');
 
@@ -99,6 +100,26 @@ export function PlivoSettingsPanel() {
       toast.error('Network error while testing Plivo connection');
     } finally {
       setTesting(false);
+    }
+  };
+
+  const syncAppWebhooks = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/plivo/configure', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.updated) {
+        toast.success('Plivo Voice Application updated', {
+          description: `Answer URL set to ${data.answerUrl}`,
+        });
+        await testConnection();
+      } else {
+        toast.error('Failed to update Plivo Application', { description: data.error });
+      }
+    } catch {
+      toast.error('Network error while updating Plivo Application');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -205,11 +226,31 @@ export function PlivoSettingsPanel() {
               </p>
             </div>
           </div>
-          <Button onClick={testConnection} loading={testing} data-testid="plivo-test-btn">
-            <RefreshCw className={cn('w-4 h-4', testing && 'animate-spin')} />
-            Test Connection
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={testConnection} loading={testing} data-testid="plivo-test-btn">
+              <RefreshCw className={cn('w-4 h-4', testing && 'animate-spin')} />
+              Test Connection
+            </Button>
+            {isConnected && (
+              <Button variant="secondary" onClick={syncAppWebhooks} loading={syncing}>
+                <Webhook className="w-4 h-4" />
+                Sync App Webhooks
+              </Button>
+            )}
+          </div>
         </div>
+
+        {isConnected && status?.application && !String(status.application.answerUrl || '').includes('/api/plivo/webhooks/answer') && (
+          <div className="mt-4 p-3 rounded-xl bg-[#E7A23A]/12 border border-[#E7A23A]/30 text-xs text-[#8a5d14] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p className="font-semibold">Voice Application Answer URL is currently pointing elsewhere:</p>
+              <code className="text-[11px] break-all">{status.application.answerUrl || 'Not set'}</code>
+            </div>
+            <Button size="sm" onClick={syncAppWebhooks} loading={syncing} className="shrink-0">
+              Point to This CRM
+            </Button>
+          </div>
+        )}
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5">
           {statusRows.map((row) => {

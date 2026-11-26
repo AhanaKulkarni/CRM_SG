@@ -20,7 +20,7 @@ export function getPlivoEnv() {
     authId: (process.env.PLIVO_AUTH_ID || '').trim(),
     authToken: (process.env.PLIVO_AUTH_TOKEN || '').trim(),
     applicationId: (process.env.PLIVO_APPLICATION_ID || '').trim(),
-    phoneNumber: (process.env.PLIVO_PHONE_NUMBER || AETHERX_PUBLIC_CALLER_ID).trim(),
+    phoneNumber: (process.env.PLIVO_CALLER_ID || process.env.PLIVO_PHONE_NUMBER || AETHERX_PUBLIC_CALLER_ID).trim(),
     webhookSecret: (process.env.PLIVO_PUBLIC_WEBHOOK_SECRET || '').trim(),
   };
 }
@@ -240,4 +240,66 @@ export async function fetchPlivoRecordingStream(recordingUrl: string): Promise<R
     headers['Authorization'] = `Basic ${Buffer.from(`${authId}:${authToken}`).toString('base64')}`;
   }
   return fetch(recordingUrl, { headers });
+}
+
+export async function configurePlivoApplicationWebhooks(baseUrl: string) {
+  const { authId, authToken, applicationId } = getPlivoEnv();
+  if (!authId || !authToken || !applicationId) {
+    throw new Error('Missing PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN, or PLIVO_APPLICATION_ID');
+  }
+  const client: any = new plivo.Client(authId, authToken);
+  const answerUrl = `${baseUrl}/api/plivo/webhooks/answer`;
+  const hangupUrl = `${baseUrl}/api/plivo/webhooks/hangup`;
+  const updated = await client.applications.update(applicationId, {
+    answerUrl,
+    answerMethod: 'POST',
+    hangupUrl,
+    hangupMethod: 'POST',
+  });
+  return {
+    updated: true,
+    answerUrl,
+    hangupUrl,
+    message: updated?.message || 'Application updated',
+  };
+}
+
+export async function initiateServerPlivoCall(opts: {
+  to: string;
+  baseUrl: string;
+  agentName: string;
+  employeeId: string;
+  leadId?: string;
+  customerId?: string;
+  recordConsent?: boolean;
+}) {
+  const { authId, authToken, phoneNumber } = getPlivoEnv();
+  if (!authId || !authToken) {
+    throw new Error('Plivo credentials are not configured on the server.');
+  }
+  const client: any = new plivo.Client(authId, authToken);
+  const answerUrl = new URL(`${opts.baseUrl}/api/plivo/webhooks/answer`);
+  answerUrl.searchParams.set('X-PH-Agent', opts.agentName);
+  answerUrl.searchParams.set('X-PH-EmployeeId', opts.employeeId);
+  if (opts.leadId) answerUrl.searchParams.set('X-PH-LeadId', opts.leadId);
+  if (opts.customerId) answerUrl.searchParams.set('X-PH-CustomerId', opts.customerId);
+  answerUrl.searchParams.set('X-PH-Record', opts.recordConsent ? 'true' : 'false');
+
+  const res = await client.calls.create(
+    phoneNumber,
+    opts.to.replace(/\s+/g, ''),
+    answerUrl.toString(),
+    {
+      answerMethod: 'POST',
+      hangupUrl: `${opts.baseUrl}/api/plivo/webhooks/hangup`,
+      hangupMethod: 'POST',
+      callbackUrl: `${opts.baseUrl}/api/plivo/webhooks/status`,
+      callbackMethod: 'POST',
+    }
+  );
+  return {
+    requestUuid: res?.requestUuid || res?.request_uuid || '',
+    message: res?.message || 'Call initiated',
+    callerId: phoneNumber,
+  };
 }
