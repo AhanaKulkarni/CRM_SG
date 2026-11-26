@@ -127,6 +127,8 @@ function Dialer({ selectedLeadId, onSelectLead }: { selectedLeadId?: string; onS
               ? `Endpoint: ${call.sdkIdentity}`
               : call.sdkStatus === 'checking'
               ? 'Connecting Plivo WebRTC…'
+              : call.sdkStatus === 'error'
+              ? call.sdkError || 'Plivo SDK error'
               : 'Plivo credentials required'}
           </p>
         </div>
@@ -348,7 +350,11 @@ function Dialer({ selectedLeadId, onSelectLead }: { selectedLeadId?: string; onS
         </div>
         {!call.sdkReady && (
           <p className="mt-3 text-[11px] text-[#E7A23A]">
-            Configure Plivo server env vars to enable live PSTN calling.
+            {call.sdkStatus === 'checking'
+              ? 'Registering Plivo Browser SDK…'
+              : call.sdkStatus === 'error'
+              ? call.sdkError || 'Plivo Browser SDK connection failed.'
+              : 'Configure Plivo server env vars to enable live PSTN calling.'}
           </p>
         )}
       </div>

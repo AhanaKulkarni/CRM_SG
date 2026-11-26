@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import * as plivo from 'plivo';
 
 const plivoAny: any = plivo;
@@ -179,22 +180,47 @@ export async function verifyPlivoConnection() {
 }
 
 export function createBrowserAccessToken(username: string, uid?: string) {
-  const { authId, authToken } = getPlivoEnv();
+  const { authId, authToken, applicationId } = getPlivoEnv();
   if (!authId || !authToken) {
     throw new Error('Plivo credentials are not configured on the server.');
   }
 
   const nowSec = Math.floor(Date.now() / 1000);
-  const token = new plivoAny.AccessToken(
-    authId,
-    authToken,
-    username,
-    { validFrom: nowSec, lifetime: 3600 },
-    uid || username
-  );
-  token.addVoiceGrants(true, true);
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT',
+    cty: 'plivo;v=1',
+  };
+  const payload = {
+    jti: uid || `${username}-${nowSec}`,
+    iss: authId,
+    sub: username,
+    ...(applicationId ? { app: applicationId } : {}),
+    nbf: nowSec - 60,
+    exp: nowSec + 3600,
+    per: {
+      voice: {
+        incoming_allow: true,
+        outgoing_allow: true,
+      },
+    },
+    grants: {
+      voice: {
+        incoming_allow: true,
+        outgoing_allow: true,
+      },
+    },
+  };
+
+  const b64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const signingInput = `${b64(header)}.${b64(payload)}`;
+  const signature = crypto
+    .createHmac('sha256', authToken)
+    .update(signingInput)
+    .digest('base64url');
+
   return {
-    token: token.toJwt(),
+    token: `${signingInput}.${signature}`,
     username,
     expiresIn: 3600,
   };

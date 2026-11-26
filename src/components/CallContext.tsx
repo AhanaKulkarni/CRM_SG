@@ -179,15 +179,15 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
 
     async function initSdk() {
       setSdkStatus('checking');
+      setSdkError('');
       try {
         const res = await fetch('/api/plivo/token', { method: 'POST' });
-        if (!res.ok) {
-          if (mounted) setSdkStatus('unconfigured');
-          return;
-        }
-        const data = await res.json();
-        if (!data.configured || !data.token) {
-          if (mounted) setSdkStatus('unconfigured');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.configured || !data.token) {
+          if (mounted) {
+            setSdkStatus(data?.configured === false ? 'unconfigured' : 'error');
+            setSdkError(data?.error || `Token request failed (${res.status})`);
+          }
           return;
         }
 
@@ -196,11 +196,19 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
         }
 
         const PlivoMod: any = await import('plivo-browser-sdk');
-        const Plivo: any = PlivoMod.default || PlivoMod;
+        const Plivo: any =
+          (typeof PlivoMod === 'function' && PlivoMod) ||
+          (typeof PlivoMod?.default === 'function' && PlivoMod.default) ||
+          (typeof PlivoMod?.default?.default === 'function' && PlivoMod.default.default) ||
+          (typeof window !== 'undefined' && (window as any).Plivo);
+
+        if (typeof Plivo !== 'function') {
+          throw new Error('Plivo Browser SDK constructor could not be resolved.');
+        }
         if (!mounted) return;
 
         const plivoBrowser = new Plivo({
-          debug: 'OFF',
+          debug: 'ERROR',
           permOnClick: true,
           enableTracking: true,
           closeProtection: true,
@@ -209,6 +217,17 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
 
         const client = plivoBrowser.client;
         plivoClientRef.current = client;
+
+        // Remove stale listeners if window._PlivoInstance was reused
+        client.removeAllListeners?.('onLogin');
+        client.removeAllListeners?.('onLoginFailed');
+        client.removeAllListeners?.('onWebrtcNotSupported');
+        client.removeAllListeners?.('onPermissionDenied');
+        client.removeAllListeners?.('onCallRemoteRinging');
+        client.removeAllListeners?.('onCallAnswered');
+        client.removeAllListeners?.('onCallTerminated');
+        client.removeAllListeners?.('onCallFailed');
+        client.removeAllListeners?.('onIncomingCall');
 
         client.on('onLogin', () => {
           if (!mounted) return;
@@ -223,6 +242,20 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
           setSdkReady(false);
           setSdkStatus('error');
           setSdkError(String(reason || 'Plivo endpoint registration failed'));
+        });
+
+        client.on('onWebrtcNotSupported', () => {
+          if (!mounted) return;
+          setSdkReady(false);
+          setSdkStatus('error');
+          setSdkError('WebRTC is not supported in this browser.');
+        });
+
+        client.on('onPermissionDenied', (reason: any) => {
+          if (!mounted) return;
+          const msg = String(reason || 'Permission denied');
+          setSdkError(msg);
+          toast.error('Plivo permission denied', { description: msg });
         });
 
         client.on('onCallRemoteRinging', () => {
@@ -282,11 +315,24 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
           toast('Incoming Plivo call', { description: `From ${callerName || 'Customer'}` });
         });
 
-        client.loginWithAccessToken(data.token);
+        if (client.isRegistered?.()) {
+          setSdkReady(true);
+          setSdkStatus('registered');
+          setSdkIdentity(data.username);
+          setSdkError('');
+        } else {
+          const initiated = client.loginWithAccessToken(data.token);
+          if (initiated === false && mounted) {
+            setSdkReady(false);
+            setSdkStatus('error');
+            setSdkError('Plivo SDK rejected AccessToken format.');
+          }
+        }
       } catch (err: any) {
         if (mounted) {
-          setSdkStatus('unconfigured');
-          setSdkError(err?.message || '');
+          setSdkReady(false);
+          setSdkStatus('error');
+          setSdkError(err?.message || 'Plivo Browser SDK initialization failed');
         }
       }
     }
@@ -356,10 +402,13 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       setDialerMinimized(false);
       setManualNumber(cleanPhone);
       setManualTarget(target);
-      toast.error('Plivo Browser SDK is not connected', {
-        description:
-          'Configure PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN, and PLIVO_APPLICATION_ID on the server to place live calls.',
-      });
+      const description =
+        sdkStatus === 'checking'
+          ? 'Plivo WebRTC is still registering. Please wait a moment and try again.'
+          : sdkStatus === 'error'
+          ? sdkError || 'Plivo Browser SDK registration failed.'
+          : sdkError || 'Configure PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN, and PLIVO_APPLICATION_ID on the server to place live calls.';
+      toast.error('Plivo Browser SDK is not connected', { description });
       return;
     }
 
@@ -809,7 +858,13 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
                   {!sdkReady && (
                     <div className="p-2.5 rounded-xl bg-[#E7A23A]/12 border border-[#E7A23A]/30 text-[11px] text-[#8a5d14] flex items-start gap-2">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                      <span>Live calling requires Plivo server env vars. Configure in Telecalling → Plivo Config.</span>
+                      <span>
+                        {sdkStatus === 'checking'
+                          ? 'Connecting to Plivo WebRTC gateway…'
+                          : sdkStatus === 'error'
+                          ? `Plivo SDK Error: ${sdkError || 'Registration failed'}`
+                          : sdkError || 'Live calling requires Plivo server env vars. Configure in Telecalling → Plivo Config.'}
+                      </span>
                     </div>
                   )}
 
