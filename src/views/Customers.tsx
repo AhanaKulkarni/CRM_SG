@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, Mail, Phone, MapPin, Plus, Eye } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { useCall } from '@/components/CallContext';
 import { FIELDS } from '@/lib/fields';
 import {
   Card,
@@ -33,6 +34,7 @@ const todayIso = new Date().toISOString().slice(0, 10);
 
 export function CustomersView() {
   const store = useStore();
+  const call = useCall();
   const { state } = store;
   const router = useRouter();
   const [adding, setAdding] = useState(false);
@@ -122,6 +124,25 @@ export function CustomersView() {
           defaults={defaults}
           searchKeys={['name', 'company', 'email', 'city']}
           onRowClick={(c: any) => router.push(`/app/customers/${c.id}`)}
+          rowActions={(c: any) =>
+            c.phone ? (
+              <button
+                type="button"
+                onClick={() =>
+                  call.startCall({
+                    phone: c.phone,
+                    contactName: c.name,
+                    company: c.company,
+                    customerId: c.id,
+                  })
+                }
+                className="p-1.5 rounded-lg text-[#26A879] hover:bg-[#26A879]/10 mr-1 transition-colors"
+                title={`Call ${c.name}`}
+              >
+                <Phone className="w-3.5 h-3.5" />
+              </button>
+            ) : null
+          }
           filters={[
             { key: 'segment', label: 'segments', options: SEG },
             { key: 'status', label: 'statuses', options: ['Active', 'Inactive'] },
@@ -231,6 +252,7 @@ export function CustomersView() {
 
 export function CustomerDetailView({ customerId }: { customerId?: string }) {
   const store = useStore();
+  const call = useCall();
   const { state } = store;
   const router = useRouter();
   const params = useParams();
@@ -318,7 +340,24 @@ export function CustomerDetailView({ customerId }: { customerId?: string }) {
             {c.name} · Customer since {fmtDate(c.since)}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!c.phone}
+            onClick={() =>
+              call.startCall({
+                phone: c.phone,
+                contactName: c.name,
+                company: c.company,
+                customerId: c.id,
+              })
+            }
+            data-testid="customer-call-btn"
+          >
+            <Phone className="w-3.5 h-3.5 text-[#26A879]" />
+            {c.phone ? `Call ${c.phone}` : 'No phone'}
+          </Button>
           <Badge tone="violet">{c.segment}</Badge>
           <Badge>{c.status}</Badge>
         </div>

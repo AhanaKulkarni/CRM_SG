@@ -2,6 +2,9 @@ import * as plivo from 'plivo';
 
 const plivoAny: any = plivo;
 
+export const AETHERX_PUBLIC_CALLER_ID = '+912269857438';
+export const AETHERX_PUBLIC_CALLER_ID_DISPLAY = '+91 22 6985 7438';
+
 export interface PlivoEnvStatus {
   configured: boolean;
   hasAuthId: boolean;
@@ -9,8 +12,6 @@ export interface PlivoEnvStatus {
   hasAppId: boolean;
   hasPhoneNumber: boolean;
   hasWebhookSecret: boolean;
-  authIdMasked: string;
-  applicationId: string;
   phoneNumber: string;
 }
 
@@ -19,7 +20,7 @@ export function getPlivoEnv() {
     authId: (process.env.PLIVO_AUTH_ID || '').trim(),
     authToken: (process.env.PLIVO_AUTH_TOKEN || '').trim(),
     applicationId: (process.env.PLIVO_APPLICATION_ID || '').trim(),
-    phoneNumber: (process.env.PLIVO_PHONE_NUMBER || '').trim(),
+    phoneNumber: (process.env.PLIVO_PHONE_NUMBER || AETHERX_PUBLIC_CALLER_ID).trim(),
     webhookSecret: (process.env.PLIVO_PUBLIC_WEBHOOK_SECRET || '').trim(),
   };
 }
@@ -39,9 +40,7 @@ export function getPlivoEnvStatus(): PlivoEnvStatus {
     hasAppId,
     hasPhoneNumber,
     hasWebhookSecret,
-    authIdMasked: authId ? `${authId.slice(0, 6)}••••${authId.slice(-4)}` : 'Not configured',
-    applicationId: applicationId || 'Not configured',
-    phoneNumber: phoneNumber || 'Not configured',
+    phoneNumber: phoneNumber === AETHERX_PUBLIC_CALLER_ID ? AETHERX_PUBLIC_CALLER_ID_DISPLAY : phoneNumber,
   };
 }
 
@@ -94,7 +93,7 @@ export async function verifyPlivoConnection() {
     let numberError: string | null = null;
     if (phoneNumber) {
       try {
-        const cleanNum = phoneNumber.replace(/^\+/, '');
+        const cleanNum = phoneNumber.replace(/[^\d]/g, '');
         numberInfo = await client.numbers.get(cleanNum);
       } catch (e: any) {
         numberError = e?.message || 'Number not found in Plivo account';
@@ -130,7 +129,6 @@ export async function verifyPlivoConnection() {
       },
       application: application
         ? {
-            appId: application.appId || applicationId,
             appName: application.appName,
             answerUrl: application.answerUrl,
             hangupUrl: application.hangupUrl,
@@ -151,7 +149,6 @@ export async function verifyPlivoConnection() {
       endpoints: endpoints.map((ep: any) => ({
         username: ep.username,
         alias: ep.alias,
-        endpointId: ep.endpointId,
       })),
       compliance: {
         indiaRegion: isIndiaNumber || (account?.timezone || '').includes('Kolkata'),
@@ -212,7 +209,6 @@ export function validatePlivoWebhookSignature(
   const { authToken, webhookSecret } = getPlivoEnv();
   const secret = webhookSecret || authToken;
 
-  // If no secret/authToken is set in environment, fail closed in production or warn in dev
   if (!secret) {
     return { valid: false, reason: 'Server Plivo webhook secret / auth token not configured' };
   }
@@ -235,4 +231,13 @@ export function validatePlivoWebhookSignature(
   } catch (e: any) {
     return { valid: false, reason: e?.message || 'Signature verification error' };
   }
+}
+
+export async function fetchPlivoRecordingStream(recordingUrl: string): Promise<Response> {
+  const { authId, authToken } = getPlivoEnv();
+  const headers: Record<string, string> = {};
+  if (authId && authToken && recordingUrl.includes('plivo.com')) {
+    headers['Authorization'] = `Basic ${Buffer.from(`${authId}:${authToken}`).toString('base64')}`;
+  }
+  return fetch(recordingUrl, { headers });
 }

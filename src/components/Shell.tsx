@@ -43,6 +43,7 @@ import { useStore } from '@/lib/store';
 import { FIELDS } from '@/lib/fields';
 import { Avatar, FormModal, Modal, ago, cn, Button } from './kit';
 import { ChatWidget } from './ChatWidget';
+import { CallProvider, useCall } from './CallContext';
 
 // Admin sees everything
 export const NAV_ADMIN = [
@@ -418,6 +419,7 @@ const QDEF: Record<string, any> = {
 function Topbar({ onMenu }: { onMenu: () => void }) {
   const store = useStore();
   const { state } = store;
+  const call = useCall();
   const router = useRouter();
   const [quick, setQuick] = useState<string | null>(null);
   const [help, setHelp] = useState(false);
@@ -526,6 +528,22 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
             ))}
           </div>
         </Dropdown>
+
+        <button
+          type="button"
+          onClick={() => call.openDialer()}
+          className={cn(
+            'relative flex items-center justify-center w-9 h-9 rounded-xl neu-btn transition-colors',
+            call.activeCall ? 'text-[#26A879]' : call.sdkReady ? 'text-brand' : 'text-[#778196]'
+          )}
+          title="Open Plivo Dialer"
+          aria-label="Open Plivo Dialer"
+        >
+          <PhoneCall className="w-4 h-4" />
+          {call.activeCall && (
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#26A879] animate-pulse" />
+          )}
+        </button>
 
         <button
           type="button"
@@ -746,32 +764,34 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-[#EEF1F6] text-[#1C2433]">
-      <Sidebar
-        open={open}
-        onClose={() => setOpen(false)}
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((c) => !c)}
-      />
-      <div className={cn('min-w-0 flex flex-col min-h-screen transition-[padding] duration-200', collapsed ? 'lg:pl-[78px]' : 'lg:pl-[264px]')}>
-        <Topbar onMenu={() => setOpen(true)} />
-        <main
-          className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-7 max-w-[1520px] w-full mx-auto min-w-0 pb-24 lg:pb-8"
-          data-testid="main-content"
-        >
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    <CallProvider>
+      <div className="min-h-screen bg-[#EEF1F6] text-[#1C2433]">
+        <Sidebar
+          open={open}
+          onClose={() => setOpen(false)}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
+        />
+        <div className={cn('min-w-0 flex flex-col min-h-screen transition-[padding] duration-200', collapsed ? 'lg:pl-[78px]' : 'lg:pl-[264px]')}>
+          <Topbar onMenu={() => setOpen(true)} />
+          <main
+            className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-7 max-w-[1520px] w-full mx-auto min-w-0 pb-24 lg:pb-8"
+            data-testid="main-content"
           >
-            {children}
-          </motion.div>
-        </main>
-      </div>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {children}
+            </motion.div>
+          </main>
+        </div>
 
-      <MobileBottomNav onOpenMore={() => setOpen(true)} />
-      <ChatWidget />
-    </div>
+        <MobileBottomNav onOpenMore={() => setOpen(true)} />
+        <ChatWidget />
+      </div>
+    </CallProvider>
   );
 }

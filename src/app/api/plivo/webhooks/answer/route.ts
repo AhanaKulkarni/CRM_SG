@@ -17,6 +17,8 @@ async function handleAnswer(req: Request) {
   const to = params.To || '';
   const recordCall = params['X-PH-Record'] === 'true' || params.Record === 'true';
   const agentHint = params['X-PH-Agent'] || from;
+  const leadIdHint = params['X-PH-LeadId'] || '';
+  const customerIdHint = params['X-PH-CustomerId'] || '';
 
   upsertPlivoCallRecord({
     callUuid,
@@ -24,7 +26,10 @@ async function handleAnswer(req: Request) {
     to,
     direction: 'Outbound',
     technicalResult: 'Initiated',
+    startTime: new Date().toISOString(),
     agentHint,
+    leadIdHint,
+    customerIdHint,
   });
 
   const xml = buildPlivoAnswerXml({

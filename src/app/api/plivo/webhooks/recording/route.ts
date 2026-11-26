@@ -8,20 +8,20 @@ export async function POST(req: Request) {
   }
 
   const callUuid = params.CallUUID || `plivo-${Date.now()}`;
-  const recordingUrl = params.RecordUrl || params.RecordingUrl || '';
+  const providerRecordingUrl = params.RecordUrl || params.RecordingUrl || '';
   const recordingDuration = Number(params.RecordingDuration || params.RecordingDurationMs || 0);
 
   const call = upsertPlivoCallRecord({
     callUuid,
     from: params.From,
     to: params.To,
-    recordingUrl,
+    providerRecordingUrl,
     recordingDuration,
   });
 
   return NextResponse.json({
     success: true,
     callId: call?.id,
-    recordingUrl,
+    recordingAvailable: Boolean(providerRecordingUrl),
   });
 }

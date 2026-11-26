@@ -21,6 +21,8 @@ export async function POST(req: Request) {
     to: params.To,
     technicalResult,
     duration,
+    startTime: params.StartTime,
+    endTime: params.EndTime || new Date().toISOString(),
   });
 
   crmDb.insert('activityLogs', {

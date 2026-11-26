@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as plivo from 'plivo';
 import { crmDb } from '@/db';
-import { getPlivoEnv, validatePlivoWebhookSignature } from './plivo';
+import { AETHERX_PUBLIC_CALLER_ID_DISPLAY, getPlivoEnv, validatePlivoWebhookSignature } from './plivo';
 
 export async function parsePlivoWebhook(req: Request) {
   const params: Record<string, string> = {};
@@ -47,6 +47,7 @@ export function mapPlivoStatus(rawStatus = '', hangupCause = ''): string {
   if (s.includes('no_answer') || s.includes('no-answer') || s.includes('timeout')) return 'No Answer';
   if (s.includes('reject') || s.includes('cancel') || s.includes('decline')) return 'Rejected';
   if (s.includes('fail') || s.includes('error') || s.includes('unallocated')) return 'Failed';
+  if (s.includes('ring')) return 'Ringing';
   if (s.includes('answer') || s.includes('complete') || s.includes('normal_clearing') || s.includes('in-progress')) {
     return 'Answered/Connected';
   }
@@ -64,45 +65,82 @@ export function upsertPlivoCallRecord(opts: {
   direction?: 'Outbound' | 'Inbound';
   technicalResult?: string;
   duration?: number;
-  recordingUrl?: string;
+  startTime?: string;
+  endTime?: string;
+  providerRecordingUrl?: string;
   recordingDuration?: number;
   agentHint?: string;
+  leadIdHint?: string;
+  customerIdHint?: string;
   eventNote?: string;
 }) {
   const existingCalls = crmDb.get('callLogs') || [];
   const existing = existingCalls.find((c: any) => c.providerCallId === opts.callUuid);
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const nowIso = new Date().toISOString();
+  const todayIso = nowIso.slice(0, 10);
+  const { phoneNumber } = getPlivoEnv();
+  const publicCallerId = phoneNumber || AETHERX_PUBLIC_CALLER_ID_DISPLAY;
 
   const targetPhone = opts.direction === 'Inbound' ? opts.from || '' : opts.to || '';
   const digits = normPhone(targetPhone);
-  const leads = crmDb.get('leads') || [];
-  const matchedLead = leads.find((l: any) => digits && normPhone(l.phone) === digits);
 
+  const leads = crmDb.get('leads') || [];
+  const customers = crmDb.get('customers') || [];
+
+  const matchedLead =
+    (opts.leadIdHint && leads.find((l: any) => l.id === opts.leadIdHint)) ||
+    leads.find((l: any) => digits && normPhone(l.phone) === digits);
+
+  const matchedCustomer =
+    (opts.customerIdHint && customers.find((c: any) => c.id === opts.customerIdHint)) ||
+    customers.find((c: any) => digits && normPhone(c.phone) === digits);
+
+  const users = crmDb.get('authorisedUsers') || [];
   const employees = crmDb.get('employees') || [];
   const hint = (opts.agentHint || opts.from || '').replace(/^sip:/i, '').split('@')[0];
-  const matchedAgent = employees.find(
+  const cleanHint = hint.replace(/^aetherx_/, '').toLowerCase();
+
+  const matchedUser = users.find(
+    (u: any) =>
+      u.name.toLowerCase() === hint.toLowerCase() ||
+      (u.email && u.email.split('@')[0].toLowerCase() === cleanHint)
+  );
+  const matchedEmp = employees.find(
     (e: any) =>
       e.name.toLowerCase() === hint.toLowerCase() ||
-      (e.email && e.email.split('@')[0].toLowerCase() === hint.replace(/^aetherx_/, '').toLowerCase())
+      (e.email && e.email.split('@')[0].toLowerCase() === cleanHint)
   );
 
-  const agentName = matchedAgent ? matchedAgent.name : hint || 'Telecaller';
-  const contactName = matchedLead ? matchedLead.name : targetPhone || 'External Contact';
-  const companyName = matchedLead ? matchedLead.company : 'Plivo Call';
+  const employeeId = matchedUser?.id || matchedEmp?.id || '';
+  const agentName = matchedUser?.name || matchedEmp?.name || hint || 'Telecaller';
+  const contactName = matchedCustomer?.name || matchedLead?.name || targetPhone || 'External Contact';
+  const companyName = matchedCustomer?.company || matchedLead?.company || 'Plivo Voice';
 
   if (existing) {
+    const updatedRecordingProxy = opts.providerRecordingUrl
+      ? `/api/plivo/recordings/${existing.id}`
+      : existing.recordingUrl;
+
     return crmDb.update('callLogs', existing.id, {
       technicalResult: opts.technicalResult || existing.technicalResult,
       duration: opts.duration !== undefined && opts.duration > 0 ? opts.duration : existing.duration,
-      recordingUrl: opts.recordingUrl || existing.recordingUrl,
-      recordingDuration: opts.recordingDuration || existing.recordingDuration,
-      updatedAt: new Date().toISOString(),
+      startTime: opts.startTime || existing.startTime,
+      endTime: opts.endTime || existing.endTime,
+      providerRecordingUrl: opts.providerRecordingUrl || existing.providerRecordingUrl || '',
+      recordingUrl: updatedRecordingProxy || '',
+      recordingDuration: opts.recordingDuration || existing.recordingDuration || 0,
+      recordingStatus: opts.providerRecordingUrl ? 'available' : existing.recordingStatus || 'pending',
+      updatedAt: nowIso,
     });
   }
 
   const created = crmDb.insert('callLogs', {
     providerCallId: opts.callUuid,
     provider: 'plivo',
+    employeeId,
+    leadId: matchedLead?.id || opts.leadIdHint || '',
+    customerId: matchedCustomer?.id || opts.customerIdHint || '',
+    callerId: publicCallerId,
     contact: contactName,
     company: companyName,
     phone: targetPhone,
@@ -111,12 +149,23 @@ export function upsertPlivoCallRecord(opts: {
     technicalResult: opts.technicalResult || 'Initiated',
     disposition: 'Pending Classification',
     duration: opts.duration || 0,
-    recordingUrl: opts.recordingUrl || '',
+    startTime: opts.startTime || nowIso,
+    endTime: opts.endTime || '',
+    timestamp: nowIso,
+    providerRecordingUrl: opts.providerRecordingUrl || '',
+    recordingUrl: '',
     recordingDuration: opts.recordingDuration || 0,
+    recordingStatus: opts.providerRecordingUrl ? 'available' : 'pending',
     date: todayIso,
     followUp: '',
     notes: opts.eventNote || `Plivo Call UUID: ${opts.callUuid}`,
   });
+
+  if (opts.providerRecordingUrl && created?.id) {
+    crmDb.update('callLogs', created.id, {
+      recordingUrl: `/api/plivo/recordings/${created.id}`,
+    });
+  }
 
   if (matchedLead) {
     crmDb.update('leads', matchedLead.id, {
@@ -139,7 +188,7 @@ export function buildPlivoAnswerXml(opts: {
   const response = new PlivoResponse();
 
   if (opts.recordCall) {
-    response.addSpeak('This call may be recorded for quality and training purposes.', {
+    response.addSpeak('This call may be recorded for quality and compliance purposes.', {
       language: 'en-IN',
     });
     response.addRecord({
@@ -152,10 +201,10 @@ export function buildPlivoAnswerXml(opts: {
   }
 
   const dial = response.addDial({
-    callerId: phoneNumber || undefined,
+    callerId: phoneNumber,
     action: `${opts.baseUrl}/api/plivo/webhooks/hangup`,
     method: 'POST',
-    callbackUrl: `${opts.baseUrl}/api/plivo/webhooks/ring`,
+    callbackUrl: `${opts.baseUrl}/api/plivo/webhooks/status`,
     callbackMethod: 'POST',
   });
 

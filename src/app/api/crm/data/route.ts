@@ -47,9 +47,17 @@ export async function GET() {
     ? (all.leads || []).filter((l: any) => l.owner === callerName || !l.owner)
     : all.leads || [];
 
-  const scopedCalls = isCaller
-    ? (all.callLogs || []).filter((c: any) => c.agent === callerName)
-    : all.callLogs || [];
+  const scopedCalls = (isCaller
+    ? (all.callLogs || []).filter((c: any) => c.employeeId === user.id || c.agent === callerName)
+    : all.callLogs || []
+  ).map((c: any) => {
+    // Never expose raw providerRecordingUrl to client; always route through authenticated /api/plivo/recordings/[id]
+    const { providerRecordingUrl, ...rest } = c;
+    return {
+      ...rest,
+      recordingUrl: providerRecordingUrl ? `/api/plivo/recordings/${c.id}` : c.recordingUrl || '',
+    };
+  });
 
   const scopedTasks = isCaller
     ? (all.tasks || []).filter((t: any) => t.assignee === callerName || !t.assignee)

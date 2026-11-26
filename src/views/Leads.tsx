@@ -19,6 +19,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { useCall } from '@/components/CallContext';
 import { FIELDS, STAGES, SOURCES, PRIORITIES } from '@/lib/fields';
 import {
   Card,
@@ -153,6 +154,7 @@ export function convertLead(store: any, lead: any) {
 
 export function LeadsView() {
   const store = useStore();
+  const call = useCall();
   const { state } = store;
   const router = useRouter();
   const [view, setView] = useState('List');
@@ -301,6 +303,25 @@ export function LeadsView() {
               defaults={LDEF}
               searchKeys={['name', 'company', 'email', 'phone', 'owner']}
               onRowClick={(l: any) => router.push(`/app/leads/${l.id}`)}
+              rowActions={(l: any) =>
+                l.phone && !(l.dnc || l.status === 'Do Not Call') ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      call.startCall({
+                        phone: l.phone,
+                        contactName: l.name,
+                        company: l.company,
+                        leadId: l.id,
+                      })
+                    }
+                    className="p-1.5 rounded-lg text-[#26A879] hover:bg-[#26A879]/10 mr-1 transition-colors"
+                    title={`Call ${l.name}`}
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                  </button>
+                ) : null
+              }
               filters={[
                 { key: 'status', label: 'stages', options: STAGES },
                 { key: 'source', label: 'sources', options: SOURCES },
@@ -439,6 +460,7 @@ export function LeadsView() {
 
 export function LeadDetailView({ leadId }: { leadId?: string }) {
   const store = useStore();
+  const call = useCall();
   const { state } = store;
   const router = useRouter();
   const params = useParams();
@@ -536,6 +558,22 @@ export function LeadDetailView({ leadId }: { leadId?: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            disabled={!lead.phone || isDNC}
+            onClick={() =>
+              call.startCall({
+                phone: lead.phone,
+                contactName: lead.name,
+                company: lead.company,
+                leadId: lead.id,
+              })
+            }
+            data-testid="lead-call-btn"
+          >
+            <Phone className="w-4 h-4 text-[#26A879]" />
+            {lead.phone ? `Call ${lead.phone}` : 'No phone'}
+          </Button>
           <Button variant="secondary" onClick={() => setEdit(true)} data-testid="lead-edit-btn">
             <Pencil className="w-4 h-4" />
             Edit

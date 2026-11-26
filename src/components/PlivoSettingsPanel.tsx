@@ -28,8 +28,6 @@ interface PlivoStatusResponse {
     hasAppId: boolean;
     hasPhoneNumber: boolean;
     hasWebhookSecret: boolean;
-    authIdMasked: string;
-    applicationId: string;
     phoneNumber: string;
   };
   account?: {
@@ -39,7 +37,6 @@ interface PlivoStatusResponse {
     timezone: string;
   } | null;
   application?: {
-    appId: string;
     appName: string;
     answerUrl: string;
     hangupUrl: string;
@@ -128,7 +125,7 @@ export function PlivoSettingsPanel() {
       label: 'Account Connection',
       ok: isConnected,
       detail: isConnected
-        ? `${status?.account?.name} (${env?.authIdMasked})`
+        ? `${status?.account?.name} (Authenticated via server)`
         : status?.error || 'Not verified — click Test Connection',
       icon: Server,
     },
@@ -149,15 +146,15 @@ export function PlivoSettingsPanel() {
       ok: Boolean(comp?.numberVerified),
       detail: status?.number
         ? `${status.number.number} (${status.number.type}, Voice ${status.number.voiceEnabled ? 'Enabled' : 'Disabled'})`
-        : status?.numberError || env?.phoneNumber || 'Not configured',
+        : status?.numberError || env?.phoneNumber || '+91 22 6985 7438',
       icon: PhoneCall,
     },
     {
       label: 'Voice Application',
       ok: Boolean(comp?.appVerified),
       detail: status?.application
-        ? `${status.application.appName} (${status.application.appId})`
-        : status?.appError || env?.applicationId || 'Not configured',
+        ? `${status.application.appName} (Configured)`
+        : status?.appError || (env?.hasAppId ? 'Application ID configured on server' : 'Not configured'),
       icon: Mic,
     },
     {
@@ -182,7 +179,7 @@ export function PlivoSettingsPanel() {
 
   const webhooks = [
     ['Answer XML', '/api/plivo/webhooks/answer'],
-    ['Ring Callback', '/api/plivo/webhooks/ring'],
+    ['Status / Ring Callback', '/api/plivo/webhooks/status'],
     ['Hangup Callback', '/api/plivo/webhooks/hangup'],
     ['Recording Callback', '/api/plivo/webhooks/recording'],
     ['Inbound Route XML', '/api/plivo/webhooks/inbound'],
