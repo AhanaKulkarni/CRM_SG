@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { crmDb } from '@/db';
 import { initiateServerPlivoCall } from '@/lib/plivo';
+import { getAuthorizedPlivoCallerId } from '@/lib/rbac';
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const numberAuth = getAuthorizedPlivoCallerId(user);
+  if (!numberAuth.authorized) {
+    return NextResponse.json(
+      { error: numberAuth.reason || 'Not authorised for Plivo calling.' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -16,7 +25,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Destination phone number is required' }, { status: 400 });
     }
 
-    // Check DNC status if leadId is provided
     if (body.leadId) {
       const lead = (crmDb.get('leads') || []).find((l: any) => l.id === body.leadId);
       if (lead && (lead.dnc || lead.status === 'Do Not Call')) {
@@ -29,6 +37,7 @@ export async function POST(req: Request) {
 
     const result = await initiateServerPlivoCall({
       to,
+      callerId: numberAuth.callerId,
       baseUrl,
       agentName: user.name,
       employeeId: user.id,

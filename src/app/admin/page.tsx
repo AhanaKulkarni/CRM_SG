@@ -8,5 +8,10 @@ export default async function AdminPage() {
     redirect('/login');
   }
 
+  // Strictly enforce Developer-only access on the server
+  if (user.role !== 'Developer') {
+    redirect(user.role === 'Caller' ? '/app/leads' : '/app/overview');
+  }
+
   return <AdminView />;
 }

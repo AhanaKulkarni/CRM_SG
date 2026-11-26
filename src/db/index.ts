@@ -32,40 +32,45 @@ if (databaseUrl) {
   }
 }
 
-// Initial seed data — includes accounts for AetherX (1 Admin + 3 Callers + 1 Super Admin)
+// Initial seed data — 4 operational accounts (@startappguru) + 1 Developer account
 function getInitialDbState() {
   const now = new Date().toISOString();
   const defaultOrgId = '00000000-0000-0000-0000-000000000001';
-  // Standard password for initial accounts: admin@aetherx
-  const standardHash = bcrypt.hashSync('admin@aetherx', 10);
+
+  const adminHash = bcrypt.hashSync(process.env.ADMIN_INITIAL_PASSWORD || 'Admin@StartApp2026', 10);
+  const devHash = bcrypt.hashSync(process.env.DEVELOPER_INITIAL_PASSWORD || 'Dev@AetherX2026', 10);
+  const caller1Hash = bcrypt.hashSync(process.env.CALLER1_INITIAL_PASSWORD || 'Caller1@StartApp2026', 10);
+  const caller2Hash = bcrypt.hashSync(process.env.CALLER2_INITIAL_PASSWORD || 'Caller2@StartApp2026', 10);
+  const caller3Hash = bcrypt.hashSync(process.env.CALLER3_INITIAL_PASSWORD || 'Caller3@StartApp2026', 10);
 
   return {
     organisations: [
       {
         id: defaultOrgId,
         name: 'StartAppGuru CRM',
-        domain: 'aetherx.app',
+        domain: 'startappguru',
         plan: 'Pro',
         users: 4,
         status: 'Active',
         logo: '/logo.png',
-        primaryColor: '#1E2B6D',
-        secondaryColor: '#22C55E',
+        primaryColor: '#6965ED',
+        secondaryColor: '#8B83F6',
         region: 'Mumbai (ap-south-1)',
         createdAt: now,
         updatedAt: now,
       },
     ],
-    // Accounts per StartAppGuru Rulebook (1 Admin + 3 Callers + Super Admin)
+    // 4 operational accounts + 1 Developer account with individual credentials
     authorisedUsers: [
       {
         id: '10000000-0000-0000-0000-000000000001',
         orgId: defaultOrgId,
         name: 'Workspace Admin',
-        email: 'admin@aetherx.app',
-        passwordHash: standardHash,
+        email: 'admin@startappguru',
+        passwordHash: adminHash,
         role: 'Admin',
         designation: 'Head of Sales & Operations',
+        assignedCallerId: '+912269857438',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -75,11 +80,12 @@ function getInitialDbState() {
       {
         id: '10000000-0000-0000-0000-000000000002',
         orgId: defaultOrgId,
-        name: 'Platform Owner',
-        email: 'superadmin@aetherx.app',
-        passwordHash: standardHash,
-        role: 'Super Admin',
-        designation: 'Platform Administrator',
+        name: 'Developer',
+        email: 'developer@startappguru',
+        passwordHash: devHash,
+        role: 'Developer',
+        designation: 'Application Owner & Developer',
+        assignedCallerId: '',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -90,10 +96,11 @@ function getInitialDbState() {
         id: '10000000-0000-0000-0000-000000000003',
         orgId: defaultOrgId,
         name: 'Caller 1',
-        email: 'caller1@aetherx.app',
-        passwordHash: standardHash,
+        email: 'caller1@startappguru',
+        passwordHash: caller1Hash,
         role: 'Caller',
         designation: 'Telecalling Executive',
+        assignedCallerId: '+912269857438',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -104,10 +111,11 @@ function getInitialDbState() {
         id: '10000000-0000-0000-0000-000000000004',
         orgId: defaultOrgId,
         name: 'Caller 2',
-        email: 'caller2@aetherx.app',
-        passwordHash: standardHash,
+        email: 'caller2@startappguru',
+        passwordHash: caller2Hash,
         role: 'Caller',
         designation: 'Telecalling Executive',
+        assignedCallerId: '',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -118,10 +126,11 @@ function getInitialDbState() {
         id: '10000000-0000-0000-0000-000000000005',
         orgId: defaultOrgId,
         name: 'Caller 3',
-        email: 'caller3@aetherx.app',
-        passwordHash: standardHash,
+        email: 'caller3@startappguru',
+        passwordHash: caller3Hash,
         role: 'Caller',
         designation: 'Telecalling Executive',
+        assignedCallerId: '',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -131,17 +140,18 @@ function getInitialDbState() {
     ],
     sessions: [],
     organisationSettings: [],
-    // 4 billable team members in employee directory
+    // 4 billable operational team members in employee directory
     employees: [
       {
         id: 'emp-admin',
         orgId: defaultOrgId,
         name: 'Workspace Admin',
-        email: 'admin@aetherx.app',
-        phone: '+91 98000 00001',
+        email: 'admin@startappguru',
+        phone: '+91 22 6985 7438',
         dept: 'Sales',
         designation: 'Head of Sales & Operations',
         role: 'Admin',
+        assignedCallerId: '+912269857438',
         status: 'Active',
         location: 'Mumbai',
         score: 95,
@@ -151,11 +161,12 @@ function getInitialDbState() {
         id: 'emp-caller1',
         orgId: defaultOrgId,
         name: 'Caller 1',
-        email: 'caller1@aetherx.app',
-        phone: '+91 98000 00002',
+        email: 'caller1@startappguru',
+        phone: '+91 22 6985 7438',
         dept: 'Telecalling',
         designation: 'Telecalling Executive',
         role: 'Caller',
+        assignedCallerId: '+912269857438',
         status: 'Active',
         location: 'Mumbai',
         score: 88,
@@ -165,11 +176,12 @@ function getInitialDbState() {
         id: 'emp-caller2',
         orgId: defaultOrgId,
         name: 'Caller 2',
-        email: 'caller2@aetherx.app',
-        phone: '+91 98000 00003',
+        email: 'caller2@startappguru',
+        phone: '',
         dept: 'Telecalling',
         designation: 'Telecalling Executive',
         role: 'Caller',
+        assignedCallerId: '',
         status: 'Active',
         location: 'Mumbai',
         score: 90,
@@ -179,11 +191,12 @@ function getInitialDbState() {
         id: 'emp-caller3',
         orgId: defaultOrgId,
         name: 'Caller 3',
-        email: 'caller3@aetherx.app',
-        phone: '+91 98000 00004',
+        email: 'caller3@startappguru',
+        phone: '',
         dept: 'Telecalling',
         designation: 'Telecalling Executive',
         role: 'Caller',
+        assignedCallerId: '',
         status: 'Active',
         location: 'Mumbai',
         score: 87,
@@ -260,13 +273,37 @@ class LocalDbRepository {
       try {
         const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
         this.data = JSON.parse(raw);
-        // Ensure all collections exist
+        // Ensure all collections exist and migrate legacy Super Admin -> Developer + @startappguru accounts
         const initial = getInitialDbState();
         for (const key of Object.keys(initial)) {
           if (!this.data[key]) {
             this.data[key] = initial[key];
           }
         }
+        let changed = false;
+        const devSeed = initial.authorisedUsers.find((s: any) => s.role === 'Developer');
+        this.data.authorisedUsers = (this.data.authorisedUsers || []).map((u: any) => {
+          if (u.role === 'Super Admin') {
+            changed = true;
+            return {
+              ...u,
+              role: 'Developer',
+              email: u.email === 'superadmin@aetherx.app' ? 'developer@startappguru' : u.email,
+              passwordHash: u.email === 'superadmin@aetherx.app' && devSeed ? devSeed.passwordHash : u.passwordHash,
+            };
+          }
+          return u;
+        });
+        for (const seedUser of initial.authorisedUsers) {
+          const exists = this.data.authorisedUsers.some(
+            (u: any) => u.email.toLowerCase() === seedUser.email.toLowerCase()
+          );
+          if (!exists) {
+            this.data.authorisedUsers.push(seedUser);
+            changed = true;
+          }
+        }
+        if (changed) this.persist();
         return;
       } catch (e) {
         console.error('Error reading local db file, resetting to initial state', e);

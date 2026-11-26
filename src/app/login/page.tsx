@@ -57,8 +57,15 @@ export default function LoginPage() {
       toast.success(mode === 'signup' ? 'Workspace created successfully!' : `Welcome back, ${data.user.name}`);
       store.set('session', data.user);
 
+      const destination =
+        data.user?.role === 'Developer'
+          ? '/admin'
+          : data.user?.role === 'Caller'
+          ? '/app/leads'
+          : targetRoute;
+
       // Reliable hard redirect to guarantee cookie delivery on Vercel
-      window.location.href = targetRoute;
+      window.location.href = destination;
     } catch (e: any) {
       setErr('Network error, please try again.');
       setBusy(false);
@@ -188,16 +195,17 @@ export default function LoginPage() {
             )}
 
             <label className="block">
-              <span className="text-xs font-medium text-slate-600">Work Email</span>
+              <span className="text-xs font-medium text-slate-600">Login Username</span>
               <div className="relative mt-1">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
                 <input
                   data-testid="login-email-input"
-                  type="email"
+                  type="text"
+                  autoComplete="username"
                   className={`${inputCls} h-11 pl-9`}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
+                  placeholder="admin@startappguru"
                   required
                 />
               </div>
@@ -230,37 +238,13 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick sign-in accounts */}
-          <div className="mt-6 pt-5 border-t border-[#E1E5ED] text-center space-y-2.5">
+          <div className="mt-6 pt-5 border-t border-[#E1E5ED] text-center space-y-1.5">
             <p className="text-[11px] font-semibold text-[#778196] uppercase tracking-wider">
-              Quick Sign-in (Password: admin@aetherx)
+              Authorised Operational Accounts
             </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => submit(undefined, 'admin@aetherx.app', 'admin@aetherx', '/app/overview')}
-                className="px-3.5 py-1.5 text-xs font-medium rounded-xl neu-btn text-[#1C2433]"
-                title="Sign in as Administrator"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => submit(undefined, 'caller1@aetherx.app', 'admin@aetherx', '/app/overview')}
-                className="px-3.5 py-1.5 text-xs font-medium rounded-xl neu-btn text-[#1C2433]"
-                title="Sign in as Caller 1"
-              >
-                Caller 1
-              </button>
-              <button
-                type="button"
-                onClick={() => submit(undefined, 'superadmin@aetherx.app', 'admin@aetherx', '/admin')}
-                className="px-3.5 py-1.5 text-xs font-medium rounded-xl neu-btn text-[#1C2433]"
-                title="Sign in as Super Admin"
-              >
-                Super Admin
-              </button>
-            </div>
+            <p className="text-xs text-[#778196]">
+              admin@startappguru · caller1@startappguru · caller2@startappguru · caller3@startappguru
+            </p>
           </div>
         </div>
       </div>

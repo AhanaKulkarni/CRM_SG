@@ -40,20 +40,25 @@ const ADMIN_ONLY_PAGES = [
   'white-label',
 ];
 
+const DEVELOPER_ONLY_PAGES = ['integrations', 'white-label'];
+
 function RoleGuard({ page, children }: { page: string; children: React.ReactNode }) {
   const { state } = useStore();
   const router = useRouter();
   const role = state.session?.role;
 
   useEffect(() => {
-    // If session is loaded and user is a Caller trying to access Admin-only page
-    if (role && role !== 'Admin' && role !== 'Super Admin' && ADMIN_ONLY_PAGES.includes(page)) {
+    if (role && role !== 'Developer' && DEVELOPER_ONLY_PAGES.includes(page)) {
+      router.replace(role === 'Caller' ? '/app/leads' : '/app/overview');
+    } else if (role && role !== 'Admin' && role !== 'Developer' && ADMIN_ONLY_PAGES.includes(page)) {
       router.replace('/app/leads');
     }
   }, [role, page, router]);
 
-  // Show nothing while redirecting
-  if (role && role !== 'Admin' && role !== 'Super Admin' && ADMIN_ONLY_PAGES.includes(page)) {
+  if (role && role !== 'Developer' && DEVELOPER_ONLY_PAGES.includes(page)) {
+    return null;
+  }
+  if (role && role !== 'Admin' && role !== 'Developer' && ADMIN_ONLY_PAGES.includes(page)) {
     return null;
   }
 

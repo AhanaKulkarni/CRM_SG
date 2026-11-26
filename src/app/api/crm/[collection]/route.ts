@@ -41,6 +41,13 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
   }
 
+  if (['orgs', 'integrations'].includes(params.collection) && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Developer access required.' }, { status: 403 });
+  }
+  if (params.collection === 'employees' && user.role !== 'Admin' && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Admin or Developer access required.' }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const created = localDb.insert(colKey, body);

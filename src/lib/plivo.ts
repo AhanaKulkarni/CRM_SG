@@ -292,6 +292,7 @@ export async function configurePlivoApplicationWebhooks(baseUrl: string) {
 
 export async function initiateServerPlivoCall(opts: {
   to: string;
+  callerId?: string;
   baseUrl: string;
   agentName: string;
   employeeId: string;
@@ -303,6 +304,7 @@ export async function initiateServerPlivoCall(opts: {
   if (!authId || !authToken) {
     throw new Error('Plivo credentials are not configured on the server.');
   }
+  const effectiveCallerId = opts.callerId || phoneNumber;
   const client: any = new plivo.Client(authId, authToken);
   const answerUrl = new URL(`${opts.baseUrl}/api/plivo/webhooks/answer`);
   answerUrl.searchParams.set('X-PH-Agent', opts.agentName);
@@ -312,7 +314,7 @@ export async function initiateServerPlivoCall(opts: {
   answerUrl.searchParams.set('X-PH-Record', opts.recordConsent ? 'true' : 'false');
 
   const res = await client.calls.create(
-    phoneNumber,
+    effectiveCallerId,
     opts.to.replace(/\s+/g, ''),
     answerUrl.toString(),
     {
@@ -326,6 +328,6 @@ export async function initiateServerPlivoCall(opts: {
   return {
     requestUuid: res?.requestUuid || res?.request_uuid || '',
     message: res?.message || 'Call initiated',
-    callerId: phoneNumber,
+    callerId: effectiveCallerId,
   };
 }

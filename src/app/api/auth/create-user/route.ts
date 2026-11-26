@@ -8,11 +8,15 @@ import bcrypt from 'bcryptjs';
 export async function POST(request: Request) {
   try {
     const session = await getSessionUser();
-    if (!session || (session.role !== 'Admin' && session.role !== 'Super Admin')) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 });
+    if (!session || (session.role !== 'Admin' && session.role !== 'Developer')) {
+      return NextResponse.json({ error: 'Unauthorized. Admin or Developer access required.' }, { status: 403 });
     }
 
-    const { name, email, password, role = 'Caller', designation = 'Telecaller' } = await request.json();
+    const { name, email, password, role = 'Caller', designation = 'Telecaller', assignedCallerId = '' } = await request.json();
+
+    if ((role === 'Developer' || role === 'Admin') && session.role !== 'Developer') {
+      return NextResponse.json({ error: 'Forbidden: Only Developer can assign Admin or Developer roles.' }, { status: 403 });
+    }
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: 'Name, email and password are required.' }, { status: 400 });
@@ -36,9 +40,18 @@ export async function POST(request: Request) {
       passwordHash: hash,
       role,
       designation,
+      assignedCallerId,
       phone: '',
       avatar: '',
       status: 'Active',
+    });
+
+    localDb.insert('activityLogs', {
+      who: session.name,
+      what: `created ${role} account`,
+      target: cleanEmail,
+      type: session.role === 'Developer' ? 'developer_audit' : 'auth',
+      time: new Date().toISOString(),
     });
 
     // Also add to employees directory if not already there

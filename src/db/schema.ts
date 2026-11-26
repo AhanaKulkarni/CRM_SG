@@ -22,7 +22,7 @@ export const authorisedUsers = pgTable('authorised_users', {
   name: text('name').notNull(),
   email: text('email').unique().notNull(),
   passwordHash: text('password_hash').notNull(),
-  role: text('role').default('Standard User').notNull(), // Admin, Super Admin, Manager, Agent, Standard User
+  role: text('role').default('Standard User').notNull(), // Developer, Admin, Caller, Standard User
   designation: text('designation').default('Team Member'),
   phone: text('phone'),
   avatar: text('avatar'),

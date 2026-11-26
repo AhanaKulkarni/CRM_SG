@@ -40,6 +40,20 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
   }
 
+  if (['orgs', 'integrations'].includes(params.collection) && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Developer access required.' }, { status: 403 });
+  }
+  if (params.collection === 'employees' && user.role !== 'Admin' && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Admin or Developer access required.' }, { status: 403 });
+  }
+
+  if (['orgs', 'integrations'].includes(params.collection) && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Developer access required.' }, { status: 403 });
+  }
+  if (params.collection === 'employees' && user.role !== 'Admin' && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Admin or Developer access required.' }, { status: 403 });
+  }
+
   try {
     const patch = await request.json();
     const updated = localDb.update(colKey, params.id, patch);
@@ -64,6 +78,20 @@ export async function DELETE(
   const colKey = VALID_COLLECTIONS[params.collection];
   if (!colKey) {
     return NextResponse.json({ error: 'Invalid collection' }, { status: 400 });
+  }
+
+  if (['orgs', 'integrations'].includes(params.collection) && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Developer access required.' }, { status: 403 });
+  }
+  if (params.collection === 'employees' && user.role !== 'Admin' && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Admin or Developer access required.' }, { status: 403 });
+  }
+
+  if (['orgs', 'integrations'].includes(params.collection) && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Developer access required.' }, { status: 403 });
+  }
+  if (params.collection === 'employees' && user.role !== 'Admin' && user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Admin or Developer access required.' }, { status: 403 });
   }
 
   try {

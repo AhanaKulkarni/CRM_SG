@@ -155,7 +155,8 @@ function Sidebar({
   const { state } = useStore();
   const pathname = usePathname();
   const role = state.session?.role || 'Caller';
-  const isAdmin = role === 'Admin' || role === 'Super Admin';
+  const isDev = role === 'Developer';
+  const isAdmin = role === 'Admin' || isDev;
   const nav = isAdmin ? NAV_ADMIN : NAV_CALLER;
 
   return (
@@ -248,12 +249,12 @@ function Sidebar({
           ))}
         </nav>
 
-        {isAdmin && (
+        {isDev && (
           <div className="p-3 border-t border-white/[0.07]">
             <Link
               href="/admin"
               onClick={onClose}
-              title={collapsed && !open ? 'Super Admin Portal' : undefined}
+              title={collapsed && !open ? 'Developer Mode' : undefined}
               data-testid="nav-admin-portal"
               className={cn(
                 'flex items-center gap-3 px-3 h-10 rounded-xl bg-white/[0.06] text-slate-200 text-[13px] hover:bg-white/[0.12] transition-colors font-medium',
@@ -261,7 +262,7 @@ function Sidebar({
               )}
             >
               <ShieldCheck className="w-4 h-4 text-[#8B83F6] shrink-0" />
-              {(!collapsed || open) && <span className="truncate">Super Admin Portal</span>}
+              {(!collapsed || open) && <span className="truncate">Developer Mode</span>}
             </Link>
           </div>
         )}
@@ -643,14 +644,14 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
               <SettingsIcon className="w-4 h-4 text-[#778196]" />
               Account settings
             </button>
-            {(me.role === 'Admin' || me.role === 'Super Admin') && (
+            {me.role === 'Developer' && (
               <button
                 data-close
                 onClick={() => router.push('/admin')}
                 className="w-full text-left px-3 py-2 rounded-xl hover:bg-white flex items-center gap-2 text-[#1C2433] transition-colors"
               >
                 <ShieldCheck className="w-4 h-4 text-brand" />
-                Super Admin Portal
+                Developer Mode
               </button>
             )}
             <button
@@ -713,7 +714,7 @@ function MobileBottomNav({ onOpenMore }: { onOpenMore: () => void }) {
   const pathname = usePathname();
   const { state } = useStore();
   const role = state.session?.role || 'Caller';
-  const isAdmin = role === 'Admin' || role === 'Super Admin';
+  const isAdmin = role === 'Admin' || role === 'Developer';
 
   const items = [
     { label: 'Home', path: isAdmin ? '/app/overview' : '/app/telecalling', icon: LayoutDashboard },

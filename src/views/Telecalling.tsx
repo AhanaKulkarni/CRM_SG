@@ -127,13 +127,15 @@ function Dialer({ selectedLeadId, onSelectLead }: { selectedLeadId?: string; onS
               ? `Endpoint: ${call.sdkIdentity}`
               : call.sdkStatus === 'checking'
               ? 'Connecting Plivo WebRTC…'
+              : call.sdkStatus === 'unauthorized'
+              ? 'No Plivo number assigned to this account'
               : call.sdkStatus === 'error'
               ? call.sdkError || 'Plivo SDK error'
               : 'Plivo credentials required'}
           </p>
         </div>
-        <Badge tone={call.sdkReady ? 'success' : isDNC ? 'danger' : 'warning'}>
-          {isDNC ? 'DNC Restricted' : call.sdkReady ? 'Plivo Live' : 'Standby'}
+        <Badge tone={call.sdkReady ? 'success' : isDNC || call.sdkStatus === 'unauthorized' ? 'danger' : 'warning'}>
+          {isDNC ? 'DNC Restricted' : call.sdkReady ? 'Plivo Live' : call.sdkStatus === 'unauthorized' ? 'Not Authorised' : 'Standby'}
         </Badge>
       </div>
 
@@ -352,6 +354,8 @@ function Dialer({ selectedLeadId, onSelectLead }: { selectedLeadId?: string; onS
           <p className="mt-3 text-[11px] text-[#E7A23A]">
             {call.sdkStatus === 'checking'
               ? 'Registering Plivo Browser SDK…'
+              : call.sdkStatus === 'unauthorized'
+              ? call.sdkError || 'No Plivo number assigned to this caller.'
               : call.sdkStatus === 'error'
               ? call.sdkError || 'Plivo Browser SDK connection failed.'
               : 'Configure Plivo server env vars to enable live PSTN calling.'}
@@ -410,9 +414,10 @@ export function TelecallingView() {
     return true;
   });
 
-  const tabsList = isCaller
-    ? ['Call Logs', 'Recordings', 'Follow-ups', 'Contacts']
-    : ['Call Logs', 'Recordings', 'Follow-ups', 'Contacts', 'Plivo Config'];
+  const isDeveloper = state.session?.role === 'Developer';
+  const tabsList = isDeveloper
+    ? ['Call Logs', 'Recordings', 'Follow-ups', 'Contacts', 'Plivo Config']
+    : ['Call Logs', 'Recordings', 'Follow-ups', 'Contacts'];
 
   return (
     <div className="space-y-5">
@@ -756,7 +761,7 @@ export function TelecallingView() {
         />
       )}
 
-      {tab === 'Plivo Config' && !isCaller && <PlivoSettingsPanel />}
+      {tab === 'Plivo Config' && isDeveloper && <PlivoSettingsPanel />}
     </div>
   );
 }

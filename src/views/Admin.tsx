@@ -29,6 +29,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
+import { PlivoSettingsPanel } from '@/components/PlivoSettingsPanel';
 import { FIELDS } from '@/lib/fields';
 import {
   Card,
@@ -185,15 +186,15 @@ export default function AdminView() {
 
   return (
     <div className="min-h-screen bg-[#EEF1F6]">
-      {/* Super Admin Top Header */}
-      <header className="bg-[#1C2433] text-white sticky top-0 z-40 border-b border-slate-800 shadow-md">
+      {/* Developer Mode Top Header */}
+      <header className="bg-[#171C2C] text-white sticky top-0 z-40 border-b border-slate-800 shadow-md">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-8 h-16 flex items-center gap-3">
           <span className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white shadow-sm">
             <ShieldCheck className="w-4 h-4" />
           </span>
           <div className="min-w-0">
-            <p className="font-semibold text-sm truncate">AetherX Platform · Super Admin</p>
-            <p className="text-[11px] text-slate-400">Multi-tenant control centre</p>
+            <p className="font-semibold text-sm truncate">AetherX Platform · Developer Mode</p>
+            <p className="text-[11px] text-slate-400">System-level governance & Plivo configuration</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <Button
@@ -253,6 +254,7 @@ export default function AdminView() {
           tabs={[
             'Organisations',
             'Users',
+            'Plivo Config',
             'Subscriptions',
             'Tenant Config',
             'Feature Access',
@@ -262,6 +264,8 @@ export default function AdminView() {
           value={tab}
           onChange={setTab}
         />
+
+        {tab === 'Plivo Config' && <PlivoSettingsPanel />}
 
         {tab === 'Organisations' && (
           <CrudTable

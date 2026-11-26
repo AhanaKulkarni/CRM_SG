@@ -54,7 +54,7 @@ export interface ActiveCallSession {
 
 interface CallContextValue {
   sdkReady: boolean;
-  sdkStatus: 'checking' | 'registered' | 'unconfigured' | 'error';
+  sdkStatus: 'checking' | 'registered' | 'unconfigured' | 'unauthorized' | 'error';
   sdkIdentity: string;
   sdkError: string;
   callerId: string;
@@ -100,7 +100,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
 
   const plivoClientRef = useRef<any>(null);
   const [sdkReady, setSdkReady] = useState(false);
-  const [sdkStatus, setSdkStatus] = useState<'checking' | 'registered' | 'unconfigured' | 'error'>('checking');
+  const [sdkStatus, setSdkStatus] = useState<'checking' | 'registered' | 'unconfigured' | 'unauthorized' | 'error'>('checking');
   const [sdkIdentity, setSdkIdentity] = useState('');
   const [sdkError, setSdkError] = useState('');
   const [callerId, setCallerId] = useState('+91 22 6985 7438');
@@ -183,6 +183,15 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await fetch('/api/plivo/token', { method: 'POST' });
         const data = await res.json().catch(() => ({}));
+        if (res.status === 403 || data?.authorized === false) {
+          if (mounted) {
+            setSdkReady(false);
+            setSdkStatus('unauthorized');
+            setCallerId('Not Assigned');
+            setSdkError(data?.error || 'No Plivo number assigned to your account.');
+          }
+          return;
+        }
         if (!res.ok || !data.configured || !data.token) {
           if (mounted) {
             setSdkStatus(data?.configured === false ? 'unconfigured' : 'error');
@@ -405,6 +414,8 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       const description =
         sdkStatus === 'checking'
           ? 'Plivo WebRTC is still registering. Please wait a moment and try again.'
+          : sdkStatus === 'unauthorized'
+          ? sdkError || 'No Plivo calling number is authorized for your account.'
           : sdkStatus === 'error'
           ? sdkError || 'Plivo Browser SDK registration failed.'
           : sdkError || 'Configure PLIVO_AUTH_ID, PLIVO_AUTH_TOKEN, and PLIVO_APPLICATION_ID on the server to place live calls.';
@@ -861,6 +872,8 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
                       <span>
                         {sdkStatus === 'checking'
                           ? 'Connecting to Plivo WebRTC gateway…'
+                          : sdkStatus === 'unauthorized'
+                          ? sdkError || 'No Plivo calling number authorized for this account.'
                           : sdkStatus === 'error'
                           ? `Plivo SDK Error: ${sdkError || 'Registration failed'}`
                           : sdkError || 'Live calling requires Plivo server env vars. Configure in Telecalling → Plivo Config.'}

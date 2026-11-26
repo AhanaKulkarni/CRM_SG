@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
+import { crmDb } from '@/db';
 import { getPlivoEnvStatus, verifyPlivoConnection } from '@/lib/plivo';
 
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Developer access required' }, { status: 403 });
   }
 
   return NextResponse.json({
@@ -18,7 +22,19 @@ export async function POST() {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (user.role !== 'Developer') {
+    return NextResponse.json({ error: 'Forbidden: Developer access required' }, { status: 403 });
+  }
 
   const result = await verifyPlivoConnection();
-  return NextResponse.json(result, { status: result.connected ? 200 : 200 });
+
+  crmDb.insert('activityLogs', {
+    who: user.name,
+    what: result.connected ? 'verified Plivo API connection' : 'failed Plivo API connection test',
+    target: 'Plivo Telephony',
+    type: 'developer_audit',
+    time: new Date().toISOString(),
+  });
+
+  return NextResponse.json(result, { status: 200 });
 }

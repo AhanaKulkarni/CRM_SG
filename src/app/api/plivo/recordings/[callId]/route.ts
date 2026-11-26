@@ -21,10 +21,10 @@ export async function GET(
     return NextResponse.json({ error: 'Call record not found' }, { status: 404 });
   }
 
-  // Enforce role-based access control: Callers can only play their own calls; Admins/Super Admins can access all
-  const isAdmin = user.role === 'Admin' || user.role === 'Super Admin';
+  // Enforce role-based access control: Callers can only play their own calls; Admins & Developer can access all
+  const isPrivileged = user.role === 'Admin' || user.role === 'Developer';
   const isOwner = call.employeeId === user.id || call.agent === user.name;
-  if (!isAdmin && !isOwner) {
+  if (!isPrivileged && !isOwner) {
     return NextResponse.json({ error: 'Forbidden: recording access restricted' }, { status: 403 });
   }
 

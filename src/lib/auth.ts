@@ -109,19 +109,9 @@ export async function loginUser(email: string, passwordPlain: string) {
     throw new Error('This account has been deactivated. Please contact your administrator.');
   }
 
-  let valid = bcrypt.compareSync(passwordPlain, user.passwordHash);
+  const valid = bcrypt.compareSync(passwordPlain, user.passwordHash);
   if (!valid) {
-    // Convenient fallback: accept standard initial password variants
-    if (
-      passwordPlain === 'admin@aetherx' ||
-      passwordPlain === 'admin@aetherx.app' ||
-      passwordPlain === 'demo1234'
-    ) {
-      valid = true;
-    }
-  }
-  if (!valid) {
-    throw new Error('Invalid email or password.');
+    throw new Error('Invalid username or password.');
   }
 
   const expiresAt = Date.now() + SESSION_MAX_AGE * 1000;
@@ -131,8 +121,9 @@ export async function loginUser(email: string, passwordPlain: string) {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: user.role === 'Super Admin' ? 'Developer' : user.role,
     designation: user.designation || 'Team Member',
+    assignedCallerId: user.assignedCallerId || '',
     phone: user.phone || '',
     avatar: user.avatar || '',
     orgId: user.orgId,
@@ -171,8 +162,9 @@ export async function loginUser(email: string, passwordPlain: string) {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: user.role === 'Super Admin' ? 'Developer' : user.role,
     designation: user.designation,
+    assignedCallerId: user.assignedCallerId || '',
     phone: user.phone,
     avatar: user.avatar,
     orgId: user.orgId,
