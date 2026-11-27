@@ -130,7 +130,7 @@ function getInitialDbState() {
         passwordHash: caller3Hash,
         role: 'Caller',
         designation: 'Telecalling Executive',
-        assignedCallerId: '',
+        assignedCallerId: '+912269854754',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -192,11 +192,11 @@ function getInitialDbState() {
         orgId: defaultOrgId,
         name: 'Caller 3',
         email: 'caller3@startappguru',
-        phone: '',
+        phone: '+91 22 6985 4754',
         dept: 'Telecalling',
         designation: 'Telecalling Executive',
         role: 'Caller',
-        assignedCallerId: '',
+        assignedCallerId: '+912269854754',
         status: 'Active',
         location: 'Mumbai',
         score: 87,
@@ -295,6 +295,10 @@ class LocalDbRepository {
           if (u.email?.toLowerCase() === 'caller2@startappguru' && !u.assignedCallerId) {
             changed = true;
             return { ...u, assignedCallerId: '+912269874466' };
+          }
+          if (u.email?.toLowerCase() === 'caller3@startappguru' && !u.assignedCallerId) {
+            changed = true;
+            return { ...u, assignedCallerId: '+912269854754' };
           }
           return u;
         });

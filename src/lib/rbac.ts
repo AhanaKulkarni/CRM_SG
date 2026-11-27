@@ -5,11 +5,13 @@ export const SHARED_PLIVO_NUMBER_DISPLAY = '+91 22 6985 7438';
 
 export const CALLER1_PLIVO_NUMBER = '+912269857438';
 export const CALLER2_PLIVO_NUMBER = '+912269874466';
+export const CALLER3_PLIVO_NUMBER = '+912269854754';
 
 export function formatPlivoNumber(num: string): string {
   const digits = (num || '').replace(/\D/g, '');
   if (digits === '912269857438') return '+91 22 6985 7438';
   if (digits === '912269874466') return '+91 22 6987 4466';
+  if (digits === '912269854754') return '+91 22 6985 4754';
   return num;
 }
 
@@ -52,6 +54,7 @@ export function getAuthorizedPlivoCallerId(
 
   const caller1Num = (process.env.PLIVO_CALLER_ID || process.env.PLIVO_PHONE_NUMBER || CALLER1_PLIVO_NUMBER).trim();
   const caller2Num = (process.env.PLIVO_CALLER_ID_CALLER2 || CALLER2_PLIVO_NUMBER).trim();
+  const caller3Num = (process.env.PLIVO_CALLER_ID_CALLER3 || CALLER3_PLIVO_NUMBER).trim();
 
   const cleanEmail = (user.email || '').trim().toLowerCase();
   const cleanName = (user.name || '').trim().toLowerCase();
@@ -59,7 +62,7 @@ export function getAuthorizedPlivoCallerId(
   let allowed: string[] = [];
 
   if (user.role === 'Developer' || user.role === 'Admin' || cleanEmail === 'admin@startappguru' || cleanEmail === 'developer@startappguru') {
-    allowed = [caller1Num, caller2Num];
+    allowed = [caller1Num, caller2Num, caller3Num];
   } else if (
     cleanEmail === 'caller1@startappguru' ||
     cleanEmail === 'caller1@aetherx.app' ||
@@ -77,7 +80,7 @@ export function getAuthorizedPlivoCallerId(
     cleanEmail === 'caller3@aetherx.app' ||
     cleanName === 'caller 3'
   ) {
-    allowed = [];
+    allowed = [caller3Num];
   } else if (user.assignedCallerId && normalizePhoneDigits(user.assignedCallerId) !== normalizePhoneDigits(caller1Num)) {
     allowed = [user.assignedCallerId.trim()];
   }
