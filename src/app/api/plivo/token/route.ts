@@ -50,6 +50,7 @@ export async function POST() {
       username,
       expiresIn,
       callerId: numberAuth.callerId,
+      allowedCallerIds: numberAuth.allowedCallerIds,
       applicationId,
       agentName: user.name,
     });

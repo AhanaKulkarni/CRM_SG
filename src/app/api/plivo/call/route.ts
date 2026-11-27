@@ -10,19 +10,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const numberAuth = getAuthorizedPlivoCallerId(user);
-  if (!numberAuth.authorized) {
-    return NextResponse.json(
-      { error: numberAuth.reason || 'Not authorised for Plivo calling.' },
-      { status: 403 }
-    );
-  }
-
   try {
     const body = await req.json();
     const to = String(body.to || '').trim();
     if (!to) {
       return NextResponse.json({ error: 'Destination phone number is required' }, { status: 400 });
+    }
+
+    const numberAuth = getAuthorizedPlivoCallerId(user, body.callerId);
+    if (!numberAuth.authorized) {
+      return NextResponse.json(
+        { error: numberAuth.reason || 'Not authorised for requested Plivo caller ID.' },
+        { status: 403 }
+      );
     }
 
     if (body.leadId) {

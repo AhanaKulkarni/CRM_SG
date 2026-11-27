@@ -58,6 +58,8 @@ interface CallContextValue {
   sdkIdentity: string;
   sdkError: string;
   callerId: string;
+  allowedCallerIds: string[];
+  setSelectedCallerId: (id: string) => void;
   micPermission: 'granted' | 'denied' | 'prompt';
   audioInputs: MediaDeviceInfo[];
   selectedMic: string;
@@ -103,7 +105,8 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   const [sdkStatus, setSdkStatus] = useState<'checking' | 'registered' | 'unconfigured' | 'unauthorized' | 'error'>('checking');
   const [sdkIdentity, setSdkIdentity] = useState('');
   const [sdkError, setSdkError] = useState('');
-  const [callerId, setCallerId] = useState('+91 22 6985 7438');
+  const [callerId, setCallerId] = useState('+912269857438');
+  const [allowedCallerIds, setAllowedCallerIds] = useState<string[]>([]);
 
   const [micPermission, setMicPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
@@ -200,6 +203,9 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        if (Array.isArray(data.allowedCallerIds)) {
+          setAllowedCallerIds(data.allowedCallerIds);
+        }
         if (data.callerId) {
           setCallerId(data.callerId);
         }
@@ -456,6 +462,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       plivoClientRef.current.call(cleanPhone.replace(/\s+/g, ''), {
         'X-PH-Agent': sessionUser?.name || 'Agent',
         'X-PH-EmployeeId': sessionUser?.id || '',
+        'X-PH-CallerId': callerId,
         'X-PH-LeadId': target.leadId || '',
         'X-PH-CustomerId': target.customerId || '',
         'X-PH-Record': recordConsent ? 'true' : 'false',
@@ -644,6 +651,8 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     sdkIdentity,
     sdkError,
     callerId,
+    allowedCallerIds,
+    setSelectedCallerId: (id: string) => setCallerId(id),
     micPermission,
     audioInputs,
     selectedMic,
@@ -829,6 +838,21 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
                     placeholder="+91 98XXXXXXXX"
                     className={inputCls}
                   />
+
+                  {allowedCallerIds.length > 1 && (
+                    <select
+                      aria-label="Outbound Caller ID"
+                      value={callerId}
+                      onChange={(e) => setCallerId(e.target.value)}
+                      className="w-full h-9 rounded-xl neu-inset px-3 text-xs text-[#1C2433] outline-none"
+                    >
+                      {allowedCallerIds.map((num) => (
+                        <option key={num} value={num}>
+                          Caller ID: {num}
+                        </option>
+                      ))}
+                    </select>
+                  )}
 
                   <div className="grid grid-cols-3 gap-1.5">
                     {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((d) => (

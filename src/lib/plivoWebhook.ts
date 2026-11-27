@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import * as plivo from 'plivo';
 import { crmDb } from '@/db';
 import { AETHERX_PUBLIC_CALLER_ID_DISPLAY, getPlivoEnv, validatePlivoWebhookSignature } from './plivo';
+import { getAuthorizedPlivoCallerId } from './rbac';
 
 export async function parsePlivoWebhook(req: Request) {
   const params: Record<string, string> = {};
@@ -58,10 +59,32 @@ export function normPhone(p: string) {
   return (p || '').replace(/\D/g, '').slice(-10);
 }
 
+export function resolveCallingUser(opts: {
+  employeeId?: string;
+  agentHint?: string;
+  from?: string;
+}) {
+  const users = crmDb.get('authorisedUsers') || [];
+  if (opts.employeeId) {
+    const byId = users.find((u: any) => u.id === opts.employeeId);
+    if (byId) return byId;
+  }
+  const hint = (opts.agentHint || opts.from || '').replace(/^sip:/i, '').split('@')[0];
+  const cleanHint = hint.replace(/^aetherx_/, '').replace(/_[A-Z0-9]{10,}$/i, '').toLowerCase();
+  return (
+    users.find(
+      (u: any) =>
+        u.name.toLowerCase() === hint.toLowerCase() ||
+        (u.email && u.email.split('@')[0].toLowerCase() === cleanHint)
+    ) || null
+  );
+}
+
 export function upsertPlivoCallRecord(opts: {
   callUuid: string;
   from?: string;
   to?: string;
+  callerId?: string;
   direction?: 'Outbound' | 'Inbound';
   technicalResult?: string;
   duration?: number;
@@ -70,6 +93,7 @@ export function upsertPlivoCallRecord(opts: {
   providerRecordingUrl?: string;
   recordingDuration?: number;
   agentHint?: string;
+  employeeIdHint?: string;
   leadIdHint?: string;
   customerIdHint?: string;
   eventNote?: string;
@@ -79,7 +103,7 @@ export function upsertPlivoCallRecord(opts: {
   const nowIso = new Date().toISOString();
   const todayIso = nowIso.slice(0, 10);
   const { phoneNumber } = getPlivoEnv();
-  const publicCallerId = phoneNumber || AETHERX_PUBLIC_CALLER_ID_DISPLAY;
+  const publicCallerId = opts.callerId || phoneNumber || AETHERX_PUBLIC_CALLER_ID_DISPLAY;
 
   const targetPhone = opts.direction === 'Inbound' ? opts.from || '' : opts.to || '';
   const digits = normPhone(targetPhone);
@@ -111,7 +135,7 @@ export function upsertPlivoCallRecord(opts: {
       (e.email && e.email.split('@')[0].toLowerCase() === cleanHint)
   );
 
-  const employeeId = matchedUser?.id || matchedEmp?.id || '';
+  const employeeId = opts.employeeIdHint || matchedUser?.id || matchedEmp?.id || '';
   const agentName = matchedUser?.name || matchedEmp?.name || hint || 'Telecaller';
   const contactName = matchedCustomer?.name || matchedLead?.name || targetPhone || 'External Contact';
   const companyName = matchedCustomer?.company || matchedLead?.company || 'Plivo Voice';
@@ -179,11 +203,13 @@ export function upsertPlivoCallRecord(opts: {
 
 export function buildPlivoAnswerXml(opts: {
   to: string;
+  callerId?: string;
   baseUrl: string;
   recordCall: boolean;
   isInbound?: boolean;
 }) {
   const { phoneNumber } = getPlivoEnv();
+  const effectiveCallerId = opts.callerId || phoneNumber;
   const PlivoResponse: any = (plivo as any).Response;
   const response = new PlivoResponse();
 
@@ -201,7 +227,7 @@ export function buildPlivoAnswerXml(opts: {
   }
 
   const dial = response.addDial({
-    callerId: phoneNumber,
+    callerId: effectiveCallerId,
     action: `${opts.baseUrl}/api/plivo/webhooks/hangup`,
     method: 'POST',
     callbackUrl: `${opts.baseUrl}/api/plivo/webhooks/status`,

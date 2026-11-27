@@ -115,7 +115,7 @@ function getInitialDbState() {
         passwordHash: caller2Hash,
         role: 'Caller',
         designation: 'Telecalling Executive',
-        assignedCallerId: '',
+        assignedCallerId: '+912269874466',
         phone: '',
         avatar: '',
         status: 'Active',
@@ -177,11 +177,11 @@ function getInitialDbState() {
         orgId: defaultOrgId,
         name: 'Caller 2',
         email: 'caller2@startappguru',
-        phone: '',
+        phone: '+91 22 6987 4466',
         dept: 'Telecalling',
         designation: 'Telecalling Executive',
         role: 'Caller',
-        assignedCallerId: '',
+        assignedCallerId: '+912269874466',
         status: 'Active',
         location: 'Mumbai',
         score: 90,
@@ -291,6 +291,10 @@ class LocalDbRepository {
               email: u.email === 'superadmin@aetherx.app' ? 'developer@startappguru' : u.email,
               passwordHash: u.email === 'superadmin@aetherx.app' && devSeed ? devSeed.passwordHash : u.passwordHash,
             };
+          }
+          if (u.email?.toLowerCase() === 'caller2@startappguru' && !u.assignedCallerId) {
+            changed = true;
+            return { ...u, assignedCallerId: '+912269874466' };
           }
           return u;
         });

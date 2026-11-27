@@ -3,6 +3,16 @@ export type AppRole = 'Developer' | 'Admin' | 'Caller';
 export const SHARED_PLIVO_NUMBER = '+912269857438';
 export const SHARED_PLIVO_NUMBER_DISPLAY = '+91 22 6985 7438';
 
+export const CALLER1_PLIVO_NUMBER = '+912269857438';
+export const CALLER2_PLIVO_NUMBER = '+912269874466';
+
+export function formatPlivoNumber(num: string): string {
+  const digits = (num || '').replace(/\D/g, '');
+  if (digits === '912269857438') return '+91 22 6985 7438';
+  if (digits === '912269874466') return '+91 22 6987 4466';
+  return num;
+}
+
 export function isDeveloper(user: { role?: string } | null | undefined): boolean {
   return user?.role === 'Developer';
 }
@@ -17,72 +27,91 @@ export function normalizePhoneDigits(p: string = ''): string {
 
 /**
  * Enforces Plivo number assignment rules:
- * - +91 22 6985 7438 is ONLY assigned to Admin and Caller 1.
- * - Caller 2 & Caller 3 can only call if a separately authorized number is configured for them.
- * - Developer manages telephony config and is NOT an operational caller.
+ * - Caller 1: ONLY +912269857438 (preserved existing config)
+ * - Caller 2: ONLY +912269874466
+ * - Admin & Developer: Access to both +912269857438 and +912269874466
+ * - Caller 3: No telecalling access
  */
-export function getAuthorizedPlivoCallerId(user: {
-  role?: string;
-  email?: string;
-  name?: string;
-  assignedCallerId?: string;
-} | null | undefined): {
+export function getAuthorizedPlivoCallerId(
+  user: {
+    role?: string;
+    email?: string;
+    name?: string;
+    assignedCallerId?: string;
+  } | null | undefined,
+  requestedCallerId?: string
+): {
   authorized: boolean;
   callerId: string;
+  allowedCallerIds: string[];
   reason?: string;
 } {
   if (!user) {
-    return { authorized: false, callerId: '', reason: 'Authentication required.' };
+    return { authorized: false, callerId: '', allowedCallerIds: [], reason: 'Authentication required.' };
   }
 
-  if (user.role === 'Developer') {
-    return {
-      authorized: false,
-      callerId: '',
-      reason: 'Developer role manages Plivo configuration and is not an operational caller.',
-    };
-  }
+  const caller1Num = (process.env.PLIVO_CALLER_ID || process.env.PLIVO_PHONE_NUMBER || CALLER1_PLIVO_NUMBER).trim();
+  const caller2Num = (process.env.PLIVO_CALLER_ID_CALLER2 || CALLER2_PLIVO_NUMBER).trim();
 
   const cleanEmail = (user.email || '').trim().toLowerCase();
   const cleanName = (user.name || '').trim().toLowerCase();
-  const sharedDigits = normalizePhoneDigits(SHARED_PLIVO_NUMBER);
 
-  // Admin and Caller 1 are authorized to use +91 22 6985 7438
-  const isAdminUser = user.role === 'Admin' || cleanEmail === 'admin@startappguru';
-  const isCaller1 =
+  let allowed: string[] = [];
+
+  if (user.role === 'Developer' || user.role === 'Admin' || cleanEmail === 'admin@startappguru' || cleanEmail === 'developer@startappguru') {
+    allowed = [caller1Num, caller2Num];
+  } else if (
     cleanEmail === 'caller1@startappguru' ||
     cleanEmail === 'caller1@aetherx.app' ||
-    cleanName === 'caller 1';
+    cleanName === 'caller 1'
+  ) {
+    allowed = [caller1Num];
+  } else if (
+    cleanEmail === 'caller2@startappguru' ||
+    cleanEmail === 'caller2@aetherx.app' ||
+    cleanName === 'caller 2'
+  ) {
+    allowed = [caller2Num];
+  } else if (
+    cleanEmail === 'caller3@startappguru' ||
+    cleanEmail === 'caller3@aetherx.app' ||
+    cleanName === 'caller 3'
+  ) {
+    allowed = [];
+  } else if (user.assignedCallerId && normalizePhoneDigits(user.assignedCallerId) !== normalizePhoneDigits(caller1Num)) {
+    allowed = [user.assignedCallerId.trim()];
+  }
 
-  if (isAdminUser || isCaller1) {
-    const serverNumber =
-      (process.env.PLIVO_CALLER_ID || process.env.PLIVO_PHONE_NUMBER || SHARED_PLIVO_NUMBER).trim();
+  if (allowed.length === 0) {
     return {
-      authorized: true,
-      callerId: serverNumber,
+      authorized: false,
+      callerId: '',
+      allowedCallerIds: [],
+      reason: 'Telecalling is not authorized for your account.',
     };
   }
 
-  // Caller 2 and Caller 3: must NEVER use +91 22 6985 7438
-  let separateNumber = (user.assignedCallerId || '').trim();
-  if (!separateNumber && (cleanEmail === 'caller2@startappguru' || cleanName === 'caller 2')) {
-    separateNumber = (process.env.PLIVO_CALLER_ID_CALLER2 || '').trim();
-  }
-  if (!separateNumber && (cleanEmail === 'caller3@startappguru' || cleanName === 'caller 3')) {
-    separateNumber = (process.env.PLIVO_CALLER_ID_CALLER3 || '').trim();
-  }
-
-  if (separateNumber && normalizePhoneDigits(separateNumber) !== sharedDigits) {
+  if (requestedCallerId) {
+    const reqDigits = normalizePhoneDigits(requestedCallerId);
+    const matched = allowed.find((n) => normalizePhoneDigits(n) === reqDigits);
+    if (!matched) {
+      return {
+        authorized: false,
+        callerId: '',
+        allowedCallerIds: allowed,
+        reason: `You are not authorized to use caller ID ${requestedCallerId}.`,
+      };
+    }
     return {
       authorized: true,
-      callerId: separateNumber,
+      callerId: matched,
+      allowedCallerIds: allowed,
     };
   }
 
   return {
-    authorized: false,
-    callerId: '',
-    reason:
-      'No Plivo calling number is authorized for your account. +91 22 6985 7438 is restricted to Admin and Caller 1.',
+    authorized: true,
+    callerId: allowed[0],
+    allowedCallerIds: allowed,
   };
 }

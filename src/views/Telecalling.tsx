@@ -215,8 +215,24 @@ function Dialer({ selectedLeadId, onSelectLead }: { selectedLeadId?: string; onS
         />
       )}
 
-      {/* Mic & Recording Consent */}
+      {/* Mic, Caller ID & Recording Consent */}
       <div className="grid grid-cols-1 gap-2">
+        {call.allowedCallerIds.length > 1 && (
+          <select
+            aria-label="Outbound Caller ID"
+            disabled={isLive}
+            value={call.callerId}
+            onChange={(e) => call.setSelectedCallerId(e.target.value)}
+            className="w-full h-9 rounded-xl neu-inset px-3 text-xs font-medium text-[#1C2433] outline-none"
+            data-testid="dialer-callerid-select"
+          >
+            {call.allowedCallerIds.map((num) => (
+              <option key={num} value={num}>
+                Outbound Line: {num}
+              </option>
+            ))}
+          </select>
+        )}
         {call.audioInputs.length > 0 ? (
           <select
             aria-label="Microphone device"
@@ -423,7 +439,7 @@ export function TelecallingView() {
     <div className="space-y-5">
       <PageHeader
         title="Telecalling"
-        subtitle="Plivo browser-based calling (+91 22 6985 7438), server-side recordings, dispositions & analytics."
+        subtitle={`Plivo browser-based calling (${call.callerId || '+91 22 6985 7438'}), server-side recordings, dispositions & analytics.`}
         actions={
           <Button
             variant="secondary"
